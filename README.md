@@ -1,1 +1,1 @@
-# Gesti-n_Peluqueria
+# Gestion_Peluqueria
