@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="M&M Petshop — peluquería canina y felina. Ama y cuida a tu mascota.">
+  <title>M&M Petshop | Peluquería Canina y Felina</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- =========================================================
+       Estilos exclusivos de esta página para el login y los
+       paneles (admin / cliente). No se tocó assets/css/style.css
+       para no afectar servicios.html, galeria.html ni contacto.html.
+       ========================================================= -->
+  <style>
+    :root{
+      /* Acentos "intermedios": misma base del sitio, un poco más vivos
+         solo dentro de login/paneles, para diferenciarlos del resto. */
+      --app-teal: #35A79A;
+      --app-plum: #6653A0;
+      --app-coral: #E37A5E;
+      --app-mint: #D7F0E6;
+      --app-lav: #E7E0F4;
+      --app-peach: #FBE3CE;
+    }
+
+    /* ---------- control de pantallas (home / login / admin / cliente) ---------- */
+    .screen{ display:none; }
+    .screen.active{ display:block; }
+    #btn-logout{ display:none; }
+    body.is-authed #btn-login{ display:none; }
+    body.is-authed #btn-logout{ display:inline-flex; }
+
+    /* Punto 3 del checklist: el nav público no debe verse fuera de la home */
+    body.is-app-screen .nav-links,
+    body.is-app-screen .nav-toggle,
+    body.is-app-screen .btn--wsp{ display:none; }
+
+    /* ================= LOGIN ================= */
+    .auth-wrap{
+      min-height:calc(100vh - 74px);
+      display:flex; align-items:center; justify-content:center;
+      background: radial-gradient(circle at 15% 15%, rgba(102,83,160,.10), transparent 45%),
+                  radial-gradient(circle at 85% 85%, rgba(53,167,154,.12), transparent 45%),
+                  var(--cream);
+      padding:60px 20px;
+    }
+    .auth-card{
+      width:100%; max-width:420px;
+      background:var(--white);
+      border:1px solid var(--line);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow-soft);
+      padding:38px 34px;
+    }
+    .auth-head{ text-align:center; margin-bottom:24px; }
+    .auth-head .bone{
+      width:52px;height:52px;border-radius:50%;
+      background:linear-gradient(135deg, var(--app-plum), var(--app-teal));
+      color:#fff; display:flex; align-items:center; justify-content:center;
+      font-size:1.4rem; margin:0 auto 14px;
+    }
+    .auth-head h2{ margin-bottom:.25em; }
+    .auth-head p{ font-size:.9rem; }
+    .captcha-field{ margin-bottom:6px; }
+    .captcha-row{
+      display:flex; align-items:center; justify-content:space-between;
+      background:var(--cream-soft); border:1px solid var(--line); border-radius:var(--radius-sm);
+      padding:10px 14px; margin-bottom:8px;
+    }
+    .captcha-question{ font-family:var(--font-display); font-weight:600; color:var(--plum-dark); letter-spacing:.5px; }
+    .captcha-refresh{
+      border:none; background:transparent; cursor:pointer; font-size:1.1rem; color:var(--teal-dark);
+      line-height:1;
+    }
+    #login-error{ min-height:1.2em; margin:4px 0 10px; }
+    .auth-demo{
+      margin-top:18px; background:var(--app-lav); border-radius:var(--radius-sm);
+      padding:14px 16px; font-size:.78rem; color:var(--ink-soft);
+    }
+    .auth-demo p{ margin:0 0 6px; color:var(--ink); font-size:.78rem; }
+    .auth-demo ul{ margin:0; padding-left:0; }
+    .auth-demo li{ list-style:none; margin-bottom:4px; }
+    .auth-demo code{ background:rgba(255,255,255,.7); padding:1px 6px; border-radius:6px; }
+    .auth-back{
+      display:block; text-align:center; margin-top:18px; font-size:.85rem; font-weight:700;
+      color:var(--teal-dark);
+    }
+
+    /* El panel admin (CSS, HTML y JS) ahora vive completo en panel_admin.html */
+
+    /* ================= PANEL CLIENTE ================= */
+    .client-top{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:16px 24px; background:var(--white); border-bottom:1px solid var(--line);
+    }
+    .client-top-left{ font-family:var(--font-display); font-weight:700; color:var(--plum-dark); }
+    .client-shell{ min-height:100vh; background:var(--cream); padding-bottom:60px; }
+    .pet-header{
+      display:flex; align-items:center; gap:18px;
+      background:linear-gradient(120deg, var(--app-plum), var(--app-teal));
+      color:#fff; border-radius:var(--radius-lg); padding:26px 30px; margin:30px 0 22px;
+    }
+    .pet-avatar{
+      width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.2);
+      display:flex; align-items:center; justify-content:center; font-size:2rem; flex-shrink:0;
+    }
+    .pet-header h2{ color:#fff; margin-bottom:.15em; }
+    .pet-header p{ color:rgba(255,255,255,.85); margin:0; }
+    .pet-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:30px; }
+    .pstat{ background:var(--white); border:1px solid var(--line); border-radius:16px; padding:18px; text-align:center; }
+    .pstat .n{ font-family:var(--font-display); font-size:1.3rem; font-weight:700; color:var(--plum-dark); }
+    .pstat .l{ font-size:.78rem; color:var(--ink-soft); font-weight:700; margin-top:2px; }
+    .pet-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:24px; align-items:start; }
+    .pet-grid h3{ margin-bottom:16px; }
+
+    .timeline{ display:flex; flex-direction:column; gap:14px; }
+    .tl-item{
+      background:var(--white); border:1px solid var(--line); border-radius:16px; padding:16px 18px;
+      position:relative; padding-left:22px;
+    }
+    .tl-item::before{
+      content:""; position:absolute; left:0; top:22px; width:10px; height:10px; border-radius:50%;
+      background:var(--app-coral);
+    }
+    .tl-date{ font-size:.75rem; font-weight:700; color:var(--teal-dark); margin-bottom:4px; }
+    .tl-service{ font-weight:700; font-family:var(--font-display); font-size:.98rem; margin-bottom:2px; }
+    .tl-meta{ font-size:.8rem; color:var(--ink-soft); margin-bottom:6px; }
+    .tl-meds{ display:flex; gap:6px; flex-wrap:wrap; }
+    .tl-med-tag{
+      font-size:.72rem; font-weight:700; background:var(--app-peach); color:#8A4A24;
+      padding:3px 9px; border-radius:999px;
+    }
+    .tl-empty{ color:var(--ink-soft); font-size:.85rem; }
+
+    .meds-list{ display:flex; flex-direction:column; gap:12px; }
+    .med-card{
+      background:var(--white); border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+      display:flex; gap:12px; align-items:flex-start;
+    }
+    .med-card .ic{ font-size:1.2rem; }
+    .med-card .name{ font-weight:700; font-size:.88rem; }
+    .med-card .meta{ font-size:.75rem; color:var(--ink-soft); }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="brand"><span class="bone">🐾</span> M&amp;M Petshop</a>
+      <nav class="nav-links" id="nav-links">
+        <a href="index.html" class="active">Inicio</a>
+        <a href="servicios.html">Servicios</a>
+        <a href="galeria.html">Galería</a>
+        <a href="contacto.html">Contacto</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn--wsp" href="https://wa.me/573212450413" target="_blank" rel="noopener">
+          <span>💬</span> 321 245 0413
+        </a>
+        <button id="btn-login" class="btn btn--ghost" type="button">🔐 Iniciar sesión</button>
+        <button id="btn-logout" class="btn btn--ghost" type="button">↩ Cerrar sesión</button>
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Pantalla: sitio público ===== -->
+  <div id="screen-home" class="screen active">
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-text">
+        <span class="eyebrow">AMA Y CUIDA A TU MASCOTA</span>
+        <h1>Peluquería canina y felina hecha con cariño real</h1>
+        <p>Baño, corte, spa y cuidado veterinario básico para perros y gatos, en un espacio tranquilo donde tu mascota se siente como en casa.</p>
+        <div class="hero-actions">
+          <a href="contacto.html" class="btn btn--coral">Agenda una cita</a>
+          <a href="servicios.html" class="btn btn--outline">Ver servicios</a>
+        </div>
+        <div class="hero-stats">
+          <div><strong>+1.200</strong><span>Mascotas atendidas</span></div>
+          <div><strong>4.9/5</strong><span>Calificación de clientes</span></div>
+          <div><strong>6 años</strong><span>De experiencia</span></div>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="thumb" style="aspect-ratio:4/3;border-radius:18px;background:linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.05));display:flex;align-items:center;justify-content:center;font-size:3rem;">🐶🐱</div>
+        <span class="badge">Hoy con cupos disponibles</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Servicios destacados ===== -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">QUÉ HACEMOS</span>
+        <h2>Servicios pensados para cada tipo de mascota</h2>
+        <p>Desde un baño rápido hasta un spa completo: elegimos las técnicas y productos según la raza, el pelaje y el temperamento.</p>
+      </div>
+      <div class="grid grid--3">
+        <div class="card reveal">
+          <div class="icon-wrap">✂️</div>
+          <h3>Corte y estilizado</h3>
+          <p>Corte de raza, deslanado y styling con tijera o máquina, según el estándar o el gusto del dueño.</p>
+          <span class="price">Desde $35.000</span>
+        </div>
+        <div class="card reveal">
+          <div class="icon-wrap">🛁</div>
+          <h3>Baño y spa</h3>
+          <p>Baño medicado o relajante, hidratación, cepillado profundo y perfume hipoalergénico.</p>
+          <span class="price">Desde $25.000</span>
+        </div>
+        <div class="card reveal">
+          <div class="icon-wrap">🐾</div>
+          <h3>Cuidado felino</h3>
+          <p>Manejo especializado y de bajo estrés para gatos: baño, corte de uñas y limpieza de oídos.</p>
+          <span class="price">Desde $30.000</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Por qué elegirnos ===== -->
+  <section class="section section--soft">
+    <div class="container">
+      <div class="section-head section-head--center" style="margin-bottom:30px;">
+        <span class="eyebrow">POR QUÉ ELEGIRNOS</span>
+        <h2>Cuidamos a tu mascota como si fuera nuestra</h2>
+      </div>
+      <div class="why-strip">
+        <div class="item reveal">
+          <div class="num">Trato sin jaulas</div>
+          <p>Espacios abiertos y supervisión constante durante toda la cita.</p>
+        </div>
+        <div class="item reveal">
+          <div class="num">Productos suaves</div>
+          <p>Shampoos hipoalergénicos aptos para piel sensible.</p>
+        </div>
+        <div class="item reveal">
+          <div class="num">Agenda flexible</div>
+          <p>Reserva por WhatsApp y confirma tu horario en minutos.</p>
+        </div>
+        <div class="item reveal">
+          <div class="num">Equipo certificado</div>
+          <p>Peluqueros con formación continua en grooming canino y felino.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Testimonios ===== -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">CLIENTES FELICES</span>
+        <h2>Lo que dicen las familias que ya confían en nosotros</h2>
+      </div>
+      <div class="grid grid--3">
+        <div class="testimonial reveal">
+          <div class="stars">★★★★★</div>
+          <p>Mi Beagle sale siempre feliz y oliendo delicioso. El equipo es muy paciente con los perros nerviosos.</p>
+          <div class="who"><div class="avatar"></div><div><strong>Camila R.</strong><br><span style="font-size:.85rem;color:var(--ink-soft)">Dueña de Toby</span></div></div>
+        </div>
+        <div class="testimonial reveal">
+          <div class="stars">★★★★★</div>
+          <p>Llevé a mi gata por primera vez a un baño y no fue un drama. Saben manejar gatos de verdad.</p>
+          <div class="who"><div class="avatar"></div><div><strong>Julián M.</strong><br><span style="font-size:.85rem;color:var(--ink-soft)">Dueño de Mora</span></div></div>
+        </div>
+        <div class="testimonial reveal">
+          <div class="stars">★★★★★</div>
+          <p>Precios justos, agenda por WhatsApp súper fácil y siempre puntuales con la entrega.</p>
+          <div class="who"><div class="avatar"></div><div><strong>Laura P.</strong><br><span style="font-size:.85rem;color:var(--ink-soft)">Dueña de Rocco</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA final ===== -->
+  <section class="section--tight">
+    <div class="container">
+      <div class="cta-band reveal">
+        <div>
+          <h2>¿Reservamos el próximo baño de tu mascota?</h2>
+          <p>Escríbenos por WhatsApp y te confirmamos disponibilidad el mismo día.</p>
+        </div>
+        <a class="btn btn--coral" href="https://wa.me/573212450413" target="_blank" rel="noopener">💬 Escribir al 321 245 0413</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand">🐾 M&amp;M Petshop</div>
+          <p style="color:rgba(255,255,255,.7);max-width:320px;">Peluquería canina y felina en Bogotá y alrededores. Amamos y cuidamos a tu mascota como parte de la familia.</p>
+        </div>
+        <div>
+          <h4>Navegación</h4>
+          <ul>
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="servicios.html">Servicios</a></li>
+            <li><a href="galeria.html">Galería</a></li>
+            <li><a href="contacto.html">Contacto</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contacto</h4>
+          <ul>
+            <li>💬 WhatsApp: 321 245 0413</li>
+            <li>📍 Chía, Cundinamarca</li>
+            <li>🕒 Lun a Sáb, 9:00 a.m. – 6:00 p.m.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© <span id="year"></span> M&amp;M Petshop. Todos los derechos reservados.</p>
+        <p>Boceto de diseño — no es un sitio en producción.</p>
+      </div>
+    </div>
+  </footer>
+
+  <a class="wsp-float" href="https://wa.me/573212450413" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">💬</a>
+
+  </div>
+  <!-- ===== Fin pantalla: sitio público ===== -->
+
+  <!-- ===== Pantalla: login ===== -->
+  <div id="screen-login" class="screen">
+    <div class="auth-wrap">
+      <div class="auth-card reveal is-visible">
+        <div class="auth-head">
+          <span class="bone">🐾</span>
+          <h2>Ingresa a tu cuenta</h2>
+          <p>Como administrador gestionas el negocio. Como cliente ves el historial de tu mascota.</p>
+        </div>
+        <form id="login-form" novalidate>
+          <div class="field" style="margin-bottom:14px;">
+            <label for="login-user">Usuario</label>
+            <input type="text" id="login-user" autocomplete="username" placeholder="Tu usuario">
+          </div>
+          <div class="field" style="margin-bottom:14px;">
+            <label for="login-pass">Contraseña</label>
+            <input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••">
+          </div>
+          <div class="field captcha-field">
+            <label for="login-captcha">Verificación de seguridad</label>
+            <div class="captcha-row">
+              <span class="captcha-question" id="captcha-question">? + ? = ?</span>
+              <button type="button" class="captcha-refresh" id="captcha-refresh" title="Generar otra pregunta" aria-label="Generar otra pregunta">↻</button>
+            </div>
+            <input type="text" id="login-captcha" inputmode="numeric" placeholder="Escribe el resultado">
+          </div>
+          <p id="login-error" class="form-note err" role="alert" aria-live="polite"></p>
+          <button type="submit" class="btn btn--coral" style="width:100%;justify-content:center;">Iniciar sesión</button>
+        </form>
+        <div class="auth-demo">
+          <p><strong>Cuentas de prueba</strong> — este login es un boceto, todavía sin servidor real:</p>
+          <ul>
+            <li>🛠️ Desarrollador → usuario <code>admin</code> · contraseña <code>petshop2026</code></li>
+            <li>💼 Dueño del negocio → usuario <code>dueno</code> · contraseña <code>negocio2026</code></li>
+            <li>✂️ Peluquero (Camila) → usuario <code>camila</code> · contraseña <code>peluqueria2026</code></li>
+            <li>🐶 Cliente (Rocky) → usuario <code>edward</code> · contraseña <code>rocky123</code></li>
+            <li>🐱 Cliente (Michi) → usuario <code>laura</code> · contraseña <code>michi123</code></li>
+          </ul>
+        </div>
+        <a href="#" id="back-home-from-login" class="auth-back">← Volver al inicio</a>
+      </div>
+    </div>
+  </div>
+  <!-- ===== Fin pantalla: login ===== -->
+
+  <!-- ===== Pantalla: panel cliente ===== -->
+  <div id="screen-client" class="screen">
+    <div class="client-shell">
+      <div class="client-top">
+        <div class="client-top-left">🐾 M&amp;M Petshop</div>
+        <button id="client-logout" class="btn btn--ghost" type="button">Cerrar sesión</button>
+      </div>
+      <div class="container">
+        <div class="pet-header reveal is-visible">
+          <div class="pet-avatar" id="pet-avatar">🐶</div>
+          <div>
+            <h2 id="pet-name">—</h2>
+            <p id="pet-meta">—</p>
+          </div>
+        </div>
+
+        <div class="pet-stats">
+          <div class="pstat"><div class="n" id="stat-visits">—</div><div class="l">Visitas totales</div></div>
+          <div class="pstat"><div class="n" id="stat-last">—</div><div class="l">Última visita</div></div>
+          <div class="pstat"><div class="n" id="stat-next">—</div><div class="l">Próxima cita</div></div>
+        </div>
+
+        <div class="pet-grid">
+          <div>
+            <h3>Historial de citas</h3>
+            <div id="pet-timeline" class="timeline"><!-- generado por JS --></div>
+          </div>
+          <div>
+            <h3>Medicamentos recetados</h3>
+            <div id="pet-meds" class="meds-list"><!-- generado por JS --></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== Fin pantalla: panel cliente ===== -->
+
+  <script src="main.js"></script>
+  <script src="reglas.js"></script>
+
+  <!-- =========================================================
+       Login + paneles (admin / cliente) — solo en esta página.
+       "Base de datos" provisional en JSON embebido: en producción
+       esto se reemplaza por llamadas a un backend/API real.
+       ========================================================= -->
+  <script>
+  (function () {
+
+    /* ---------- Base de datos provisional (JSON externo + localStorage) ----------
+       La primera vez se siembra desde data.json y se guarda en localStorage bajo
+       la llave STORAGE_KEY. panel_admin.html lee y escribe ese mismo almacén, así
+       que cualquier cambio que haga el admin (servicios, empleados, citas,
+       medicamentos, perfil del negocio) se refleja aquí sin tocar este archivo.
+       En producción, loadDB()/saveDB() se reemplazan por llamadas a un backend
+       real, sin tocar el resto de la lógica de login ni de los paneles. */
+    var STORAGE_KEY = "mm_petshop_db";
+    var DB = null;
+
+    function loadDB() {
+      var cached = null;
+      try { cached = localStorage.getItem(STORAGE_KEY); } catch (e) { cached = null; }
+
+      if (cached) {
+        try {
+          DB = JSON.parse(cached);
+          if (MMRules.migrar(DB)) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); } catch (e) {} }
+          setLoginEnabled(true);
+          return Promise.resolve();
+        } catch (e) { /* si el JSON guardado está corrupto, se vuelve a sembrar abajo */ }
+      }
+
+      return fetch("data.json")
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function (json) {
+          DB = json;
+          MMRules.migrar(DB);
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); } catch (e) { /* modo privado, etc. */ }
+          setLoginEnabled(true);
+        })
+        .catch(function (err) {
+          console.error("No se pudo cargar data.json:", err);
+          showLoginError(
+            "No se pudo cargar la base de datos (data.json). Si abriste el archivo con doble clic, " +
+            "los navegadores bloquean esa carga por seguridad. Sirve la carpeta con un servidor local, " +
+            "por ejemplo: \"python3 -m http.server\" y abre http://localhost:8000/index.html"
+          );
+          setLoginEnabled(false);
+        });
+    }
+
+    function setLoginEnabled(enabled) {
+      var submitBtn = loginForm ? loginForm.querySelector("button[type=submit]") : null;
+      if (submitBtn) submitBtn.disabled = !enabled;
+      if (userInput) userInput.disabled = !enabled;
+      if (passInput) passInput.disabled = !enabled;
+      if (captchaInput) captchaInput.disabled = !enabled;
+    }
+
+    /* ---------- Elementos ---------- */
+    var body = document.body;
+    var btnLogin = document.getElementById("btn-login");
+    var btnLogout = document.getElementById("btn-logout");
+    var backHome = document.getElementById("back-home-from-login");
+
+    var loginForm = document.getElementById("login-form");
+    var userInput = document.getElementById("login-user");
+    var passInput = document.getElementById("login-pass");
+    var captchaInput = document.getElementById("login-captcha");
+    var captchaQuestion = document.getElementById("captcha-question");
+    var captchaRefresh = document.getElementById("captcha-refresh");
+    var loginError = document.getElementById("login-error");
+
+    var clientLogout = document.getElementById("client-logout");
+
+    var captchaAnswer = 0;
+    var SESSION_KEY = "mm_session";
+
+    var PANEL_BY_ROLE = { desarrollador: "panel_admin.html", dueno: "panel_dueno.html", empleado: "panel_empleado.html" };
+
+    /* ---------- Continuar sesión si ya había una activa ---------- */
+    var existingSession = null;
+    try { existingSession = JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch (e) { existingSession = null; }
+    if (existingSession && PANEL_BY_ROLE[existingSession.role]) {
+      window.location.href = PANEL_BY_ROLE[existingSession.role];
+      return;
+    }
+
+    /* ---------- Navegación entre pantallas ---------- */
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach(function (el) {
+        el.classList.remove("active");
+      });
+      document.getElementById(id).classList.add("active");
+      // El menú público (Inicio/Servicios/Galería/Contacto) solo tiene sentido
+      // en la pantalla de inicio; en login o en el panel del cliente se oculta
+      // para que no se vea de fondo ni interfiera con la navegación del panel.
+      body.classList.toggle("is-app-screen", id !== "screen-home");
+      window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    }
+
+    if (btnLogin) {
+      btnLogin.addEventListener("click", function () {
+        generateCaptcha();
+        showScreen("screen-login");
+      });
+    }
+    if (backHome) {
+      backHome.addEventListener("click", function (e) {
+        e.preventDefault();
+        showScreen("screen-home");
+      });
+    }
+    function logout() {
+      body.classList.remove("is-authed");
+      try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+      loginForm.reset();
+      showScreen("screen-home");
+    }
+    if (btnLogout) btnLogout.addEventListener("click", logout);
+    if (clientLogout) clientLogout.addEventListener("click", logout);
+
+    /* ---------- Captcha (pregunta matemática simple) ---------- */
+    function generateCaptcha() {
+      var a = Math.floor(Math.random() * 8) + 1;
+      var b = Math.floor(Math.random() * 8) + 1;
+      captchaAnswer = a + b;
+      captchaQuestion.textContent = a + " + " + b + " = ?";
+      captchaInput.value = "";
+    }
+    if (captchaRefresh) captchaRefresh.addEventListener("click", generateCaptcha);
+    generateCaptcha();
+
+    /* ---------- Carga inicial de la base de datos ---------- */
+    setLoginEnabled(false);
+    loadDB().then(function () {
+      if (existingSession && existingSession.role === "client" && DB) {
+        var pet = DB.pets.find(function (p) { return p.id === existingSession.petId; });
+        if (pet) {
+          body.classList.add("is-authed");
+          renderClient(existingSession, pet);
+          showScreen("screen-client");
+        }
+      }
+    });
+
+    /* ---------- Envío del login ---------- */
+    if (loginForm) {
+      loginForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        if (!DB) {
+          return showLoginError("La base de datos todavía se está cargando, espera un momento.");
+        }
+
+        var username = userInput.value.trim();
+        var password = passInput.value.trim();
+        var captchaValue = parseInt(captchaInput.value.trim(), 10);
+
+        if (!username || !password) {
+          return showLoginError("Completa usuario y contraseña.");
+        }
+        if (isNaN(captchaValue) || captchaValue !== captchaAnswer) {
+          showLoginError("La verificación de seguridad no coincide. Intenta de nuevo.");
+          generateCaptcha();
+          return;
+        }
+
+        var user = DB.users.find(function (u) {
+          return u.username === username && u.password === password;
+        });
+
+        if (!user) {
+          showLoginError("Usuario o contraseña incorrectos.");
+          generateCaptcha();
+          return;
+        }
+
+        loginError.textContent = "";
+
+        if (PANEL_BY_ROLE[user.role]) {
+          try {
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username, role: user.role, name: user.name, employeeId: user.employeeId }));
+          } catch (e) {}
+          window.location.href = PANEL_BY_ROLE[user.role];
+          return;
+        }
+
+        body.classList.add("is-authed");
+        try {
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username, role: "client", name: user.name, petId: user.petId }));
+        } catch (e) {}
+        var pet = DB.pets.find(function (p) { return p.id === user.petId; });
+        renderClient(user, pet);
+        showScreen("screen-client");
+
+        loginForm.reset();
+      });
+    }
+
+    function showLoginError(msg) {
+      loginError.textContent = msg;
+    }
+
+    /* ---------- Render: panel cliente ---------- */
+    function renderClient(user, pet) {
+      if (!pet) return;
+
+      document.getElementById("pet-avatar").textContent = pet.avatar;
+      document.getElementById("pet-name").textContent = pet.name;
+      document.getElementById("pet-meta").textContent =
+        pet.breed + " · " + pet.age + " · dueño: " + pet.owner;
+
+      var sorted = pet.appointments.slice().sort(function (a, b) {
+        return (b.date + (b.time || "")).localeCompare(a.date + (a.time || ""));
+      });
+
+      document.getElementById("stat-visits").textContent = pet.appointments.length;
+      document.getElementById("stat-last").textContent = sorted.length ? formatDate(sorted[0].date) : "—";
+      document.getElementById("stat-next").textContent = pet.nextAppointment ? formatDate(pet.nextAppointment) : "Sin agendar";
+
+      // Línea de tiempo de citas
+      var timeline = document.getElementById("pet-timeline");
+      timeline.innerHTML = "";
+      if (!sorted.length) {
+        timeline.innerHTML = '<p class="tl-empty">Todavía no hay citas registradas.</p>';
+      }
+      sorted.forEach(function (a) {
+        var item = document.createElement("div");
+        item.className = "tl-item";
+        var medsHtml = a.meds.length
+          ? '<div class="tl-meds">' + a.meds.map(function (m) { return '<span class="tl-med-tag">💊 ' + m + '</span>'; }).join("") + '</div>'
+          : '<div class="tl-meds"><span class="tl-med-tag" style="background:var(--app-mint);color:var(--teal-dark);">Sin medicamentos</span></div>';
+        item.innerHTML =
+          '<div class="tl-date">' + formatDate(a.date) + (a.time ? " · " + a.time : "") + " · " + escapeHtml(a.estado || "Pendiente") + '</div>' +
+          '<div class="tl-service">' + escapeHtml(MMRules.nombreServicio(DB, a)) + '</div>' +
+          '<div class="tl-meta">Atendido por <strong>' + escapeHtml(MMRules.nombreEmpleado(DB, a)) + '</strong> — ' + escapeHtml(a.notes || "") + '</div>' +
+          medsHtml;
+        timeline.appendChild(item);
+      });
+
+      // Lista de medicamentos recetados (únicos)
+      var medsWrap = document.getElementById("pet-meds");
+      medsWrap.innerHTML = "";
+      var seen = {};
+      var uniqueMeds = [];
+      sorted.forEach(function (a) {
+        a.meds.forEach(function (m) {
+          if (!seen[m]) { seen[m] = true; uniqueMeds.push({ name: m, date: a.date }); }
+        });
+      });
+      if (!uniqueMeds.length) {
+        medsWrap.innerHTML = '<p class="tl-empty">Sin medicamentos recetados hasta ahora. 🎉</p>';
+      }
+      uniqueMeds.forEach(function (m) {
+        var card = document.createElement("div");
+        card.className = "med-card";
+        card.innerHTML =
+          '<div class="ic">💊</div>' +
+          '<div><div class="name">' + m.name + '</div>' +
+          '<div class="meta">Recetado el ' + formatDate(m.date) + '</div></div>';
+        medsWrap.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    function formatDate(isoDate) {
+      var d = new Date(isoDate + "T00:00:00");
+      return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+    }
+
+  })();
+  </script>
+</body>
+</html>

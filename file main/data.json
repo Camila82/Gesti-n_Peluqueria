@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "businessName": "M&M Petshop",
+    "address": "Chía, Cundinamarca",
+    "phone": "321 245 0413",
+    "hours": "Lun–Sáb · 9:00–18:00",
+    "confirmationTemplate": "¡Hola {cliente}! Tu cita para {mascota} quedó confirmada el {fecha} a las {hora} con {empleado}. Te esperamos ✂️🐶",
+    "schemaVersion": 2
+  },
+
+  "users": [
+    { "username": "admin", "password": "petshop2026", "role": "desarrollador", "name": "Equipo Dev" },
+    { "username": "dueno", "password": "negocio2026", "role": "dueno", "name": "Marcela (Dueña)" },
+    { "username": "camila", "password": "peluqueria2026", "role": "empleado", "name": "Camila", "employeeId": "e1" },
+    { "username": "edward", "password": "rocky123", "role": "client", "name": "Edward Gil", "petId": "p1" },
+    { "username": "laura", "password": "michi123", "role": "client", "name": "Laura Ríos", "petId": "p2" }
+  ],
+
+  "services": [
+    { "id": "s1", "name": "Baño básico", "meta": "Shampoo neutro, secado, cepillado y perfume.", "price": 25000, "duration": 60, "species": ["Perro", "Gato"], "active": true, "bookable": true },
+    { "id": "s2", "name": "Spa relajante", "meta": "Avena, mascarilla hidratante, masaje y aromaterapia.", "price": 45000, "duration": 90, "species": ["Perro", "Gato"], "active": true, "bookable": true },
+    { "id": "s3", "name": "Corte de raza", "meta": "Estilizado según estándar o preferencia del dueño.", "price": 40000, "duration": 90, "species": ["Perro"], "active": true, "bookable": true },
+    { "id": "s4", "name": "Peluquería felina", "meta": "Manejo de bajo estrés: baño, uñas y desenredado.", "price": 30000, "duration": 60, "species": ["Gato"], "active": true, "bookable": true },
+    { "id": "s5", "name": "Limpieza dental", "meta": "Cepillado dental y gel antisarro.", "price": 18000, "duration": 30, "species": ["Perro", "Gato"], "active": true, "bookable": true },
+    { "id": "s6", "name": "Chequeo básico", "meta": "Revisión general de peso, piel, oídos y parásitos.", "price": 20000, "duration": 30, "species": ["Perro", "Gato"], "active": true, "bookable": true },
+    { "id": "s7", "name": "Corte de uñas", "meta": "Corte y limado seguro.", "price": 10000, "duration": 30, "species": ["Perro", "Gato"], "active": true, "bookable": true },
+    { "id": "s8", "name": "Limpieza de oídos", "meta": "Limpieza con solución especializada.", "price": 12000, "duration": 30, "species": ["Perro", "Gato"], "active": true, "bookable": true },
+    { "id": "s9", "name": "Tienda de accesorios", "meta": "Correas, camas, juguetes y alimento premium.", "price": null, "duration": 0, "species": ["Perro", "Gato"], "active": true, "bookable": false },
+    { "id": "s10", "name": "Baño y corte", "meta": "Baño básico más corte de raza o corte de mantenimiento.", "price": 55000, "duration": 120, "species": ["Perro"], "active": true, "bookable": true },
+    { "id": "s11", "name": "Baño medicado", "meta": "Baño con shampoo dermatológico para piel sensible, hongos o dermatitis.", "price": 35000, "duration": 60, "species": ["Perro", "Gato"], "active": true, "bookable": true },
+    { "id": "s12", "name": "Baño gato", "meta": "Baño de bajo estrés para gatos, secado suave y cepillado.", "price": 30000, "duration": 60, "species": ["Gato"], "active": true, "bookable": true }
+  ],
+
+  "employees": [
+    { "id": "e1", "name": "Camila", "schedule": "Lun–Sáb · 9:00–18:00", "active": true }
+  ],
+
+  "pets": [
+    {
+      "id": "p1",
+      "name": "Rocky",
+      "species": "Perro",
+      "avatar": "🐶",
+      "breed": "Labrador",
+      "age": "3 años",
+      "owner": "Edward Gil",
+      "appointments": [
+        {
+          "id": "a1",
+          "date": "2026-08-25",
+          "time": "10:00",
+          "service": "Baño y corte",
+          "serviceId": "s10",
+          "professional": "Camila",
+          "employeeId": "e1",
+          "estado": "Completada",
+          "notes": "Piel algo sensible, se usó shampoo hipoalergénico.",
+          "meds": ["Antipulgas tópico"]
+        },
+        {
+          "id": "a2",
+          "date": "2026-07-14",
+          "time": "09:30",
+          "service": "Corte de uñas",
+          "serviceId": "s7",
+          "professional": "Camila",
+          "employeeId": "e1",
+          "estado": "Completada",
+          "notes": "Sin novedades.",
+          "meds": []
+        },
+        {
+          "id": "a3",
+          "date": "2026-06-02",
+          "time": "11:00",
+          "service": "Baño medicado",
+          "serviceId": "s11",
+          "professional": "Camila",
+          "employeeId": "e1",
+          "estado": "Completada",
+          "notes": "Leve dermatitis en las orejas, se recomendó seguimiento.",
+          "meds": ["Loción antiinflamatoria ótica"]
+        }
+      ],
+      "nextAppointment": "2026-10-05"
+    },
+    {
+      "id": "p2",
+      "name": "Michi",
+      "species": "Gato",
+      "avatar": "🐱",
+      "breed": "Criollo",
+      "age": "2 años",
+      "owner": "Laura Ríos",
+      "appointments": [
+        {
+          "id": "a4",
+          "date": "2026-08-30",
+          "time": "15:00",
+          "service": "Baño gato",
+          "serviceId": "s12",
+          "professional": "Camila",
+          "employeeId": "e1",
+          "estado": "Completada",
+          "notes": "Manejo tranquilo, sin estrés.",
+          "meds": []
+        },
+        {
+          "id": "a5",
+          "date": "2026-07-01",
+          "time": "14:00",
+          "service": "Limpieza de oídos",
+          "serviceId": "s8",
+          "professional": "Camila",
+          "employeeId": "e1",
+          "estado": "Completada",
+          "notes": "Cerumen leve, se limpió sin complicaciones.",
+          "meds": ["Solución limpiadora ótica"]
+        }
+      ],
+      "nextAppointment": null
+    }
+  ]
+}

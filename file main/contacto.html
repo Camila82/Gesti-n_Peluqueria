@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Contacta a M&M Petshop para agendar el baño o corte de tu mascota.">
+  <title>Contacto | M&M Petshop</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="brand"><span class="bone">🐾</span> M&amp;M Petshop</a>
+      <nav class="nav-links" id="nav-links">
+        <a href="index.html">Inicio</a>
+        <a href="servicios.html">Servicios</a>
+        <a href="galeria.html">Galería</a>
+        <a href="contacto.html" class="active">Contacto</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn--wsp" href="https://wa.me/573212450413" target="_blank" rel="noopener"><span>💬</span> 321 245 0413</a>
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-head">
+    <div class="container">
+      <span class="eyebrow">HABLEMOS</span>
+      <h1>Agenda la cita de tu mascota</h1>
+      <p>Escríbenos por el formulario o directo por WhatsApp. Respondemos en el mismo horario de atención.</p>
+      <p class="breadcrumb"><a href="index.html">Inicio</a> / Contacto</p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      <div class="grid grid--2" style="align-items:start;">
+
+        <div class="form-card reveal">
+          <h3>Cuéntanos sobre tu mascota</h3>
+          <form id="contact-form" novalidate>
+            <div class="form-row">
+              <div class="field">
+                <label for="name">Nombre completo</label>
+                <input type="text" id="name" name="name" placeholder="Tu nombre" required>
+              </div>
+              <div class="field">
+                <label for="phone">Teléfono / WhatsApp</label>
+                <input type="tel" id="phone" name="phone" placeholder="321 000 0000" required>
+              </div>
+            </div>
+
+            <div class="field" style="margin-bottom:18px;">
+              <label for="email">Correo (opcional)</label>
+              <input type="email" id="email" name="email" placeholder="tucorreo@ejemplo.com">
+            </div>
+
+            <div class="field" style="margin-bottom:18px;">
+              <label>¿Qué mascota tienes?</label>
+              <div class="pet-toggle">
+                <input type="checkbox" id="pet-dog" name="pet" value="perro">
+                <label for="pet-dog">🐶 Perro</label>
+                <input type="checkbox" id="pet-cat" name="pet" value="gato">
+                <label for="pet-cat">🐱 Gato</label>
+              </div>
+            </div>
+
+            <div class="field" style="margin-bottom:18px;">
+              <label for="service">Servicio de interés</label>
+              <select id="service" name="service">
+                <option value="">Selecciona una opción</option>
+                <option value="bano">Baño básico</option>
+                <option value="spa">Spa relajante</option>
+                <option value="corte">Corte de raza</option>
+                <option value="felino">Peluquería felina</option>
+                <option value="otro">Otro / no estoy seguro</option>
+              </select>
+            </div>
+
+            <div class="field" style="margin-bottom:22px;">
+              <label for="message">Mensaje</label>
+              <textarea id="message" name="message" placeholder="Raza, tamaño, algo que debamos saber..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn--coral">Enviar solicitud</button>
+            <p id="form-note" class="form-note" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <div class="reveal">
+          <div class="info-list" style="margin-bottom:28px;">
+            <div class="item">
+              <div class="ic">💬</div>
+              <div>
+                <h4 style="margin-bottom:.2em;">WhatsApp</h4>
+                <p>321 245 0413 — respuesta el mismo día</p>
+              </div>
+            </div>
+            <div class="item">
+              <div class="ic">📍</div>
+              <div>
+                <h4 style="margin-bottom:.2em;">Ubicación</h4>
+                <p>Chía, Cundinamarca, Colombia</p>
+              </div>
+            </div>
+            <div class="item">
+              <div class="ic">🕒</div>
+              <div>
+                <h4 style="margin-bottom:.2em;">Horario</h4>
+                <p>Lunes a sábado, 9:00 a.m. – 6:00 p.m.</p>
+              </div>
+            </div>
+          </div>
+          <div class="map-frame">
+            <iframe src="https://maps.google.com/maps?q=Ch%C3%ADa,+Cundinamarca,+Colombia&t=&z=12&ie=UTF8&iwloc=&output=embed" loading="lazy" allowfullscreen title="Mapa de ubicación M&M Petshop"></iframe>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand">🐾 M&amp;M Petshop</div>
+          <p style="color:rgba(255,255,255,.7);max-width:320px;">Peluquería canina y felina en Bogotá y alrededores. Amamos y cuidamos a tu mascota como parte de la familia.</p>
+        </div>
+        <div>
+          <h4>Navegación</h4>
+          <ul>
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="servicios.html">Servicios</a></li>
+            <li><a href="galeria.html">Galería</a></li>
+            <li><a href="contacto.html">Contacto</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contacto</h4>
+          <ul>
+            <li>💬 WhatsApp: 321 245 0413</li>
+            <li>📍 Chía, Cundinamarca</li>
+            <li>🕒 Lun a Sáb, 9:00 a.m. – 6:00 p.m.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© <span id="year"></span> M&amp;M Petshop. Todos los derechos reservados.</p>
+        <p>Boceto de diseño — no es un sitio en producción.</p>
+      </div>
+    </div>
+  </footer>
+
+  <a class="wsp-float" href="https://wa.me/573212450413" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">💬</a>
+
+  <script src="main.js"></script>
+</body>
+</html>

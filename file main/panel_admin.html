@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Panel de administración de M&M Petshop.">
+  <meta name="robots" content="noindex">
+  <title>Panel de desarrollador | M&M Petshop</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- =========================================================
+       Todo lo del panel admin (estilos, marcado y lógica CRUD)
+       vive únicamente en este archivo, tal como se pidió.
+       ========================================================= -->
+  <style>
+    :root{
+      --app-teal: #35A79A;
+      --app-plum: #6653A0;
+      --app-coral: #E37A5E;
+      --app-mint: #D7F0E6;
+      --app-lav: #E7E0F4;
+      --app-peach: #FBE3CE;
+      --app-pink: #FBDCE6;
+    }
+    body{ background:var(--cream); }
+
+    /* ---------- Layout general ---------- */
+    .dash{ display:flex; min-height:100vh; }
+    .dash-side{
+      width:230px; flex-shrink:0;
+      background:linear-gradient(180deg, var(--app-plum), var(--plum-dark));
+      color:#fff; padding:24px 16px; display:flex; flex-direction:column;
+      position:sticky; top:0; height:100vh; overflow-y:auto;
+    }
+    .dash-brand{ display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-weight:700; font-size:1.05rem; margin-bottom:26px; }
+    .dash-nav{ display:flex; flex-direction:column; gap:4px; flex:1; }
+    .dash-link{
+      display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:14px;
+      font-weight:700; font-size:.88rem; color:rgba(255,255,255,.85); cursor:pointer;
+      border:none; background:transparent; text-align:left; width:100%; font-family:var(--font-body);
+    }
+    .dash-link .ic{ font-size:1rem; }
+    .dash-link.active{ background:rgba(255,255,255,.18); color:#fff; }
+    .dash-link:hover{ background:rgba(255,255,255,.12); color:#fff; }
+    .dash-user{
+      margin:16px 0 10px; background:rgba(255,255,255,.1); border-radius:12px; padding:12px;
+      font-size:.78rem; line-height:1.5;
+    }
+    .dash-user b{ display:block; font-family:var(--font-display); font-size:.9rem; }
+    .dash-logout{
+      background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
+      color:#fff; border-radius:12px; padding:11px; font-family:var(--font-display); font-weight:600;
+      font-size:.85rem; cursor:pointer;
+    }
+
+    .dash-main{ flex:1; padding:30px 34px; min-width:0; }
+    .dash-head{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+    .dash-head p{ margin:4px 0 0; }
+
+    .dash-tab{ display:none; }
+    .dash-tab.active{ display:block; }
+
+    /* ---------- Tarjetas de estadística ---------- */
+    .dash-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+    .dstat{ border-radius:16px; padding:16px 18px; }
+    .dstat .n{ font-family:var(--font-display); font-size:1.5rem; font-weight:700; color:var(--plum-dark); }
+    .dstat .l{ font-size:.78rem; font-weight:700; color:var(--ink-soft); margin-top:2px; }
+    .dstat.a{ background:var(--app-lav); } .dstat.b{ background:var(--app-mint); }
+    .dstat.c{ background:var(--app-peach); } .dstat.d{ background:var(--app-pink); }
+
+    .dash-cols{ display:grid; grid-template-columns:1.4fr 1fr; gap:20px; align-items:start; }
+
+    /* ---------- Paneles / tarjetas de contenido ---------- */
+    .dpanel{ background:var(--white); border:1px solid var(--line); border-radius:16px; margin-bottom:20px; overflow:hidden; }
+    .dpanel-head{ display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); gap:10px; flex-wrap:wrap; }
+    .dpanel-head h3{ font-size:.98rem; margin:0; }
+    .dpanel-body{ padding:6px 0; }
+    .dadd{ font-size:.78rem; font-weight:700; color:var(--teal-dark); cursor:pointer; background:none; border:none; font-family:var(--font-body); }
+    .dadd:hover{ text-decoration:underline; }
+
+    .drow{ display:flex; justify-content:flex-start; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); font-size:.85rem; }
+    .drow > .name, .drow > div:first-child{ flex:1 1 auto; min-width:0; }
+    .drow:last-child{ border-bottom:none; }
+    .drow .name{ font-weight:700; }
+    .drow .meta{ font-size:.75rem; color:var(--ink-soft); }
+    .drow .price{ font-family:var(--font-display); font-weight:700; color:var(--coral-dark); white-space:nowrap; min-width:90px; text-align:right; flex-shrink:0; }
+    .drow-actions{ display:flex; gap:6px; flex-shrink:0; }
+    .icon-btn{
+      border:1px solid var(--line); background:var(--white); border-radius:9px; width:30px; height:30px;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.85rem;
+    }
+    .icon-btn:hover{ border-color:var(--teal); }
+    .icon-btn.danger:hover{ border-color:#C0574A; background:#FBEDEA; }
+
+    .dtag.warn{ background:var(--app-peach); color:#8A4A24; }
+    .dtag.cancel{ background:var(--app-pink); color:#9A3B54; }
+    .dtag.info{ background:#E3ECFA; color:#2C4C80; }
+    .dtag.off{ background:#ECECEC; color:#6B6B6B; }
+    .drow.is-off{ opacity:.62; }
+    .icon-btn.wsp:hover{ border-color:#25D366; background:#EAFBF0; }
+    .form-error{ color:#9A3B54; font-size:.8rem; font-weight:700; margin:6px 0 0; min-height:1em; }
+    .form-note{ color:var(--ink-soft); font-size:.78rem; margin:6px 0 0; }
+    .dtag{ font-size:.7rem; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--app-mint); color:var(--teal-dark); white-space:nowrap; }
+    .dtext{ padding:14px 18px; font-size:.82rem; color:var(--ink-soft); line-height:1.6; }
+    .dempty{ padding:18px; font-size:.85rem; color:var(--ink-soft); }
+
+    /* ---------- Formularios inline de alta/edición ---------- */
+    .inline-form{
+      padding:14px 18px; background:var(--cream-soft); border-bottom:1px solid var(--line);
+      display:grid; gap:10px;
+    }
+    .inline-form .frow{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .inline-form label{ font-size:.72rem; font-weight:700; color:var(--plum-dark); display:block; margin-bottom:4px; }
+    .inline-form input, .inline-form select, .inline-form textarea{
+      width:100%; border:1px solid var(--line); border-radius:10px; padding:9px 11px;
+      font-family:var(--font-body); font-size:.85rem; background:var(--white);
+    }
+    .inline-form select{
+      appearance:none; -webkit-appearance:none;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'><path d='M5 8l5 5 5-5' stroke='%235C4E82' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+      background-repeat:no-repeat; background-position:right 12px center; background-size:16px;
+      padding-right:34px; cursor:pointer;
+    }
+    .inline-form select:focus, .inline-form input:focus, .inline-form textarea:focus{
+      outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(63,140,137,.16);
+    }
+    .inline-form select.pet-select{
+      font-family:var(--font-display); font-weight:600; font-size:.95rem;
+      background-color:var(--cream-soft); border:2px solid var(--line); padding:11px 34px 11px 14px;
+    }
+    .inline-form select.pet-select:focus{ border-color:var(--coral); box-shadow:0 0 0 3px rgba(217,136,114,.18); }
+    .inline-form textarea{ resize:vertical; min-height:64px; }
+    .inline-form .factions{ display:flex; gap:8px; justify-content:flex-end; }
+    .btn-sm{
+      border-radius:999px; padding:8px 16px; font-family:var(--font-display); font-weight:600;
+      font-size:.78rem; cursor:pointer; border:1px solid transparent;
+    }
+    .btn-sm.save{ background:var(--coral); color:#fff; }
+    .btn-sm.save:hover{ background:var(--coral-dark); }
+    .btn-sm.cancel{ background:var(--white); border-color:var(--line); color:var(--ink-soft); }
+
+    /* ---------- Medicamentos (chips editables) ---------- */
+    .med-chip-row{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+    .med-chip{
+      display:inline-flex; align-items:center; gap:6px; background:var(--app-peach); color:#8A4A24;
+      font-size:.72rem; font-weight:700; padding:4px 6px 4px 10px; border-radius:999px;
+    }
+    .med-chip button{
+      border:none; background:rgba(0,0,0,.08); color:inherit; width:16px; height:16px; border-radius:50%;
+      cursor:pointer; font-size:.65rem; line-height:1; display:flex; align-items:center; justify-content:center;
+    }
+    .med-add-row{ display:flex; gap:6px; margin-top:6px; }
+    .med-add-row input{ flex:1; border:1px solid var(--line); border-radius:8px; padding:6px 9px; font-size:.78rem; }
+    .med-add-row button{ border:none; background:var(--teal); color:#fff; border-radius:8px; padding:6px 10px; font-size:.78rem; cursor:pointer; }
+
+    .appt-card{ border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin:0 18px 14px; }
+    .appt-card:last-child{ margin-bottom:18px; }
+    .appt-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+    .appt-title{ font-family:var(--font-display); font-weight:600; font-size:.92rem; }
+    .appt-sub{ font-size:.75rem; color:var(--ink-soft); }
+
+    .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+    .toolbar select, .toolbar input{
+      border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:.82rem; background:var(--white);
+    }
+
+    .save-toast{
+      position:fixed; bottom:20px; right:20px; background:var(--plum-dark); color:#fff;
+      padding:12px 18px; border-radius:12px; font-size:.85rem; font-weight:600;
+      box-shadow:var(--shadow-soft); opacity:0; transform:translateY(10px); transition:opacity .2s, transform .2s;
+      pointer-events:none; z-index:200;
+    }
+    .save-toast.show{ opacity:1; transform:translateY(0); }
+
+    @media (max-width:900px){
+      .dash{ flex-direction:column; }
+      .dash-side{ width:100%; flex-direction:row; align-items:center; gap:10px; overflow-x:auto; position:relative; height:auto; }
+      .dash-brand{ margin-bottom:0; }
+      .dash-nav{ flex-direction:row; }
+      .dash-user{ display:none; }
+      .dash-main{ padding:22px 18px; }
+      .dash-stats{ grid-template-columns:repeat(2,1fr); }
+      .dash-cols{ grid-template-columns:1fr; }
+      .inline-form .frow{ grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dash">
+    <aside class="dash-side">
+      <div class="dash-brand">🐾 M&amp;M Petshop <span style="opacity:.7;font-weight:500;font-size:.75rem;">· Dev</span></div>
+      <nav class="dash-nav">
+        <button class="dash-link active" data-tab="inicio" type="button"><span class="ic">🏠</span> Inicio</button>
+        <button class="dash-link" data-tab="servicios" type="button"><span class="ic">🧴</span> Servicios</button>
+        <button class="dash-link" data-tab="empleados" type="button"><span class="ic">🧑‍🦰</span> Empleados</button>
+        <button class="dash-link" data-tab="reservas" type="button"><span class="ic">📅</span> Reservas</button>
+        <button class="dash-link" data-tab="perfil" type="button"><span class="ic">🏷️</span> Perfil del negocio</button>
+        <button class="dash-link" data-tab="usuarios" type="button"><span class="ic">🔐</span> Usuarios</button>
+        <button class="dash-link" data-tab="database" type="button"><span class="ic">🗄️</span> Base de datos</button>
+      </nav>
+      <div class="dash-user"><b id="side-admin-name">Equipo M&amp;M</b>Sesión de desarrollador</div>
+      <button id="admin-logout" class="dash-logout" type="button">↩ Cerrar sesión</button>
+    </aside>
+
+    <main class="dash-main">
+
+      <!-- ============ TAB: INICIO ============ -->
+      <section class="dash-tab active" id="tab-inicio">
+        <div class="dash-head">
+          <div>
+            <h2>Hola, <span id="admin-name">Equipo</span> 👋</h2>
+            <p id="biz-address-line">Chía, Cundinamarca — panel de administración</p>
+          </div>
+        </div>
+
+        <div class="dash-stats">
+          <div class="dstat a"><div class="n" id="stat-citas">—</div><div class="l">Citas registradas</div></div>
+          <div class="dstat b"><div class="n" id="stat-ingresos">—</div><div class="l">Ingresos estimados</div></div>
+          <div class="dstat c"><div class="n" id="stat-empleados">—</div><div class="l">Empleados</div></div>
+          <div class="dstat d"><div class="n" id="stat-servicios">—</div><div class="l">Servicios publicados</div></div>
+        </div>
+
+        <div class="dpanel">
+          <div class="dpanel-head"><h3>Citas más recientes</h3><span class="dadd" data-goto="reservas">Ir a Reservas →</span></div>
+          <div id="home-reservas"></div>
+        </div>
+      </section>
+
+      <!-- ============ TAB: SERVICIOS ============ -->
+      <section class="dash-tab" id="tab-servicios">
+        <div class="dash-head">
+          <div><h2>Servicios y precios</h2><p>Crea, edita o elimina lo que ofrece el negocio.</p></div>
+        </div>
+        <div class="dpanel">
+          <div class="dpanel-head">
+            <h3>Catálogo de servicios</h3>
+            <button class="dadd" id="add-service-btn" type="button">+ Agregar servicio</button>
+          </div>
+          <div id="service-form-slot"></div>
+          <div id="services-list"></div>
+        </div>
+      </section>
+
+      <!-- ============ TAB: EMPLEADOS ============ -->
+      <section class="dash-tab" id="tab-empleados">
+        <div class="dash-head">
+          <div><h2>Empleados</h2><p>Gestiona quién atiende y sus horarios.</p></div>
+        </div>
+        <div class="dpanel">
+          <div class="dpanel-head">
+            <h3>Equipo</h3>
+            <button class="dadd" id="add-employee-btn" type="button">+ Agregar empleado</button>
+          </div>
+          <div id="employee-form-slot"></div>
+          <div id="employees-list"></div>
+        </div>
+      </section>
+
+      <!-- ============ TAB: RESERVAS ============ -->
+      <section class="dash-tab" id="tab-reservas">
+        <div class="dash-head">
+          <div><h2>Reservas</h2><p>Historial de citas por mascota: servicio, profesional, notas y medicamentos recetados.</p></div>
+        </div>
+
+        <div class="dpanel">
+          <div class="dpanel-head"><h3>Próxima cita por mascota</h3></div>
+          <div id="next-appt-list"></div>
+        </div>
+
+        <div class="toolbar">
+          <select id="filter-pet"><option value="">Todas las mascotas</option></select>
+        </div>
+
+        <div class="dpanel">
+          <div class="dpanel-head">
+            <h3>Citas</h3>
+            <button class="dadd" id="add-appt-btn" type="button">+ Nueva reserva</button>
+          </div>
+          <div id="appt-form-slot"></div>
+          <div id="appts-list"></div>
+        </div>
+      </section>
+
+      <!-- ============ TAB: PERFIL DEL NEGOCIO ============ -->
+      <section class="dash-tab" id="tab-perfil">
+        <div class="dash-head">
+          <div><h2>Perfil del negocio</h2><p>Estos datos aparecen en el sitio público y en los mensajes automáticos.</p></div>
+        </div>
+        <div class="dpanel">
+          <form id="profile-form" class="inline-form" style="border-bottom:none;">
+            <div class="frow">
+              <div><label for="p-name">Nombre del negocio</label><input id="p-name" type="text"></div>
+              <div><label for="p-phone">WhatsApp / teléfono</label><input id="p-phone" type="text"></div>
+            </div>
+            <div class="frow">
+              <div><label for="p-address">Dirección / zona</label><input id="p-address" type="text"></div>
+              <div><label for="p-hours">Horario de atención</label><input id="p-hours" type="text"></div>
+            </div>
+            <div>
+              <label for="p-template">Mensaje de confirmación automático</label>
+              <textarea id="p-template" placeholder="Usa {cliente} {mascota} {fecha} {hora} {empleado}"></textarea>
+            </div>
+            <div class="factions">
+              <button type="submit" class="btn-sm save">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ============ TAB: USUARIOS (solo desarrollador) ============ -->
+      <section class="dash-tab" id="tab-usuarios">
+        <div class="dash-head">
+          <div><h2>Usuarios</h2><p>Cuentas de acceso al sistema: clientes, peluqueros, dueño y desarrolladores.</p></div>
+        </div>
+        <div class="dpanel">
+          <div class="dpanel-head">
+            <h3>Cuentas registradas</h3>
+            <button class="dadd" id="add-user-btn" type="button">+ Agregar usuario</button>
+          </div>
+          <div id="user-form-slot"></div>
+          <div id="users-list"></div>
+        </div>
+      </section>
+
+      <!-- ============ TAB: BASE DE DATOS (solo desarrollador) ============ -->
+      <section class="dash-tab" id="tab-database">
+        <div class="dash-head">
+          <div><h2>Base de datos</h2><p>Estado del almacén provisional (localStorage) que usa todo el sitio.</p></div>
+        </div>
+
+        <div class="dash-stats">
+          <div class="dstat a"><div class="n" id="db-stat-size">—</div><div class="l">Tamaño (KB)</div></div>
+          <div class="dstat b"><div class="n" id="db-stat-users">—</div><div class="l">Usuarios</div></div>
+          <div class="dstat c"><div class="n" id="db-stat-pets">—</div><div class="l">Mascotas</div></div>
+          <div class="dstat d"><div class="n" id="db-stat-appts">—</div><div class="l">Citas totales</div></div>
+        </div>
+
+        <div class="dpanel">
+          <div class="dpanel-head">
+            <h3>JSON en vivo (localStorage: mm_petshop_db)</h3>
+            <button class="dadd" id="copy-db-btn" type="button">Copiar JSON</button>
+          </div>
+          <pre id="db-json-view" style="margin:0;padding:14px 18px;font-size:.72rem;line-height:1.5;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-word;color:var(--ink-soft);"></pre>
+        </div>
+
+        <div class="dpanel">
+          <div class="dpanel-head"><h3>Restablecer datos de ejemplo</h3></div>
+          <div class="dtext">
+            Esto borra todos los cambios guardados en este navegador (servicios, empleados, usuarios, reservas y
+            perfil) y vuelve a cargar los datos originales de <code>data.json</code>. Afecta a los 4 paneles por igual,
+            porque todos comparten el mismo almacén.
+            <div style="margin-top:10px;"><button class="btn-sm cancel" id="reset-db-btn" type="button">Restablecer datos</button></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="save-toast" id="save-toast">Guardado ✓</div>
+
+  <script src="reglas.js"></script>
+  <script>
+  (function () {
+
+    var STORAGE_KEY = "mm_petshop_db";
+    var SESSION_KEY = "mm_session";
+    var DB = null;
+
+    /* ---------- Guarda de sesión: solo el rol "dueno" puede ver este archivo ---------- */
+    var session = null;
+    try { session = JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch (e) { session = null; }
+    if (!session || session.role !== "desarrollador") {
+      window.location.href = "index.html";
+      return;
+    }
+    document.getElementById("admin-name").textContent = session.name || "Equipo";
+    document.getElementById("side-admin-name").textContent = session.name || "Equipo";
+
+    document.getElementById("admin-logout").addEventListener("click", function () {
+      try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+      window.location.href = "index.html";
+    });
+
+    /* ---------- Carga / guardado del almacén compartido ---------- */
+    function loadDB() {
+      var cached = null;
+      try { cached = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+      if (cached) {
+        try { return Promise.resolve(JSON.parse(cached)); } catch (e) {}
+      }
+      return fetch("data.json").then(function (res) { return res.json(); });
+    }
+
+    function saveDB() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); } catch (e) {}
+      toast();
+    }
+
+    function toast() {
+      var el = document.getElementById("save-toast");
+      el.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { el.classList.remove("show"); }, 1400);
+    }
+
+    function uid(prefix) {
+      return prefix + "_" + Math.random().toString(36).slice(2, 9);
+    }
+
+    function money(n) {
+      if (n === null || n === undefined || n === "") return "Variable";
+      return "$" + Number(n).toLocaleString("es-CO");
+    }
+
+    function formatDate(isoDate) {
+      if (!isoDate) return "—";
+      var d = new Date(isoDate + "T00:00:00");
+      return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    /* ---------- Navegación entre pestañas ---------- */
+    var tabButtons = document.querySelectorAll(".dash-link[data-tab]");
+    tabButtons.forEach(function (btn) {
+      btn.addEventListener("click", function () { goToTab(btn.dataset.tab); });
+    });
+    document.querySelectorAll("[data-goto]").forEach(function (el) {
+      el.addEventListener("click", function () { goToTab(el.dataset.goto); });
+    });
+    function goToTab(tab) {
+      document.querySelectorAll(".dash-link[data-tab]").forEach(function (b) {
+        b.classList.toggle("active", b.dataset.tab === tab);
+      });
+      document.querySelectorAll(".dash-tab").forEach(function (s) {
+        s.classList.toggle("active", s.id === "tab-" + tab);
+      });
+    }
+
+    /* =========================================================
+       INICIO
+       ========================================================= */
+    function renderInicio() {
+      document.getElementById("biz-address-line").textContent = DB.meta.address + " — panel de desarrollador (acceso total)";
+
+      var allAppts = [];
+      DB.pets.forEach(function (pet) {
+        pet.appointments.forEach(function (a) {
+          allAppts.push({ pet: pet, appt: a });
+        });
+      });
+      allAppts.sort(function (x, y) { return (y.appt.date + (y.appt.time || "")).localeCompare(x.appt.date + (x.appt.time || "")); });
+
+      document.getElementById("stat-citas").textContent = allAppts.length;
+      var estimated = allAppts.length * 45000;
+      document.getElementById("stat-ingresos").textContent = money(estimated);
+      document.getElementById("stat-empleados").textContent = MMRules.empleadosActivos(DB).length;
+      document.getElementById("stat-servicios").textContent = DB.services.filter(function (x) { return x.active !== false; }).length;
+
+      var wrap = document.getElementById("home-reservas");
+      wrap.innerHTML = "";
+      if (!allAppts.length) {
+        wrap.innerHTML = '<p class="dempty">Todavía no hay citas registradas.</p>';
+      }
+      allAppts.slice(0, 5).forEach(function (item) {
+        var row = document.createElement("div");
+        row.className = "drow";
+        row.innerHTML =
+          '<div><div class="name">' + item.pet.avatar + " " + escapeHtml(item.pet.name) + '</div>' +
+          '<div class="meta">' + escapeHtml(item.pet.owner) + " · " + escapeHtml(MMRules.nombreServicio(DB, item.appt)) + '</div></div>' +
+          '<span class="dtag">' + formatDate(item.appt.date) + " " + escapeHtml(item.appt.time || "") + " · " + escapeHtml(MMRules.nombreEmpleado(DB, item.appt)) + '</span>';
+        wrap.appendChild(row);
+      });
+    }
+
+    /* =========================================================
+       SERVICIOS — CRUD
+       Regla: un servicio con historial no se borra, se DESACTIVA.
+       Deja de ofrecerse en las reservas, pero las citas pasadas
+       conservan su servicio y su historial.
+       ========================================================= */
+    var editingServiceId = null;
+
+    function speciesLabel(list) {
+      if (!list || list.length !== 1) return "Perros y gatos";
+      return list[0] === "Gato" ? "Solo gatos" : "Solo perros";
+    }
+
+    function renderServices() {
+      var wrap = document.getElementById("services-list");
+      wrap.innerHTML = "";
+      if (!DB.services.length) {
+        wrap.innerHTML = '<p class="dempty">No hay servicios todavía. Agrega el primero.</p>';
+        return;
+      }
+      DB.services.forEach(function (s) {
+        var off = s.active === false;
+        var row = document.createElement("div");
+        row.className = "drow" + (off ? " is-off" : "");
+        var extra = s.bookable === false ? "No se agenda" : (s.duration + " min · " + speciesLabel(s.species));
+        row.innerHTML =
+          '<div><div class="name">' + escapeHtml(s.name) + (off ? ' <span class="dtag off">Inactivo</span>' : '') + '</div>' +
+          '<div class="meta">' + escapeHtml(s.meta || "") + ' · ' + escapeHtml(extra) + '</div></div>' +
+          '<div class="price">' + money(s.price) + '</div>' +
+          '<div class="drow-actions">' +
+            '<button class="icon-btn" data-edit="' + s.id + '" title="Editar">✏️</button>' +
+            (off
+              ? '<button class="icon-btn" data-on="' + s.id + '" title="Volver a ofrecer">↩️</button>'
+              : '<button class="icon-btn danger" data-off="' + s.id + '" title="Desactivar (conserva el historial)">🗑️</button>') +
+          '</div>';
+        wrap.appendChild(row);
+      });
+      wrap.querySelectorAll("[data-edit]").forEach(function (b) {
+        b.addEventListener("click", function () { openServiceForm(b.dataset.edit); });
+      });
+      wrap.querySelectorAll("[data-off]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          if (!confirm("El servicio dejará de ofrecerse en las reservas, pero el historial de citas se conserva. ¿Continuar?")) return;
+          var s = MMRules.servicioPorId(DB, b.dataset.off);
+          if (s) s.active = false;
+          saveDB(); renderServices(); renderInicio(); refreshApptSelectors(); renderAppointments();
+        });
+      });
+      wrap.querySelectorAll("[data-on]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var s = MMRules.servicioPorId(DB, b.dataset.on);
+          if (s) s.active = true;
+          saveDB(); renderServices(); renderInicio(); refreshApptSelectors();
+        });
+      });
+    }
+
+    document.getElementById("add-service-btn").addEventListener("click", function () { openServiceForm(null); });
+
+    function openServiceForm(id) {
+      editingServiceId = id;
+      var svc = id ? DB.services.find(function (s) { return s.id === id; }) : null;
+      var slot = document.getElementById("service-form-slot");
+      var sp = svc ? speciesLabel(svc.species) : "Perros y gatos";
+      slot.innerHTML =
+        '<form class="inline-form" id="service-form">' +
+          '<div class="frow">' +
+            '<div><label>Nombre del servicio</label><input id="svc-name" required value="' + escapeHtml(svc ? svc.name : "") + '"></div>' +
+            '<div><label>Precio (COP) — vacío = "Variable" (no se agenda)</label><input id="svc-price" type="number" min="0" step="1000" placeholder="Ej: 25000" value="' + ((svc && svc.price !== null && svc.price !== undefined) ? svc.price : "") + '"></div>' +
+          '</div>' +
+          '<div class="frow">' +
+            '<div><label>Duración (minutos, múltiplo de 30)</label><input id="svc-duration" type="number" min="30" step="30" value="' + (svc && svc.duration ? svc.duration : 60) + '"></div>' +
+            '<div><label>Aplica para</label><select id="svc-species">' +
+              ["Perros y gatos", "Solo perros", "Solo gatos"].map(function (o) {
+                return '<option' + (o === sp ? " selected" : "") + '>' + o + '</option>';
+              }).join("") +
+            '</select></div>' +
+          '</div>' +
+          '<div><label>Detalle (razas, tamaños, incluye...)</label><input id="svc-meta" value="' + escapeHtml(svc ? svc.meta : "") + '"></div>' +
+          '<p class="form-error" id="svc-error"></p>' +
+          '<div class="factions">' +
+            '<button type="button" class="btn-sm cancel" id="svc-cancel">Cancelar</button>' +
+            '<button type="submit" class="btn-sm save">' + (svc ? "Guardar cambios" : "Agregar servicio") + '</button>' +
+          '</div>' +
+        '</form>';
+      document.getElementById("svc-cancel").addEventListener("click", function () { slot.innerHTML = ""; });
+      document.getElementById("service-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var name = document.getElementById("svc-name").value.trim();
+        var priceRaw = document.getElementById("svc-price").value.trim();
+        var price = priceRaw === "" ? null : (parseInt(priceRaw, 10) || 0);
+        var duration = parseInt(document.getElementById("svc-duration").value, 10) || 60;
+        var spSel = document.getElementById("svc-species").value;
+        var species = spSel === "Solo perros" ? ["Perro"] : (spSel === "Solo gatos" ? ["Gato"] : ["Perro", "Gato"]);
+        var meta = document.getElementById("svc-meta").value.trim();
+        var err = document.getElementById("svc-error");
+        if (!name) return;
+        if (duration % 30 !== 0) { err.textContent = "La duración debe ser múltiplo de 30 minutos."; return; }
+        var repetido = DB.services.some(function (s) { return s !== svc && s.name.toLowerCase() === name.toLowerCase(); });
+        if (repetido) { err.textContent = "Ya existe un servicio con ese nombre."; return; }
+        if (svc) {
+          svc.name = name; svc.price = price; svc.meta = meta; svc.duration = duration; svc.species = species;
+          svc.bookable = price !== null;
+        } else {
+          DB.services.push({ id: uid("s"), name: name, price: price, meta: meta, duration: duration, species: species, active: true, bookable: price !== null });
+        }
+        saveDB(); slot.innerHTML = ""; renderServices(); renderInicio(); refreshApptSelectors(); renderAppointments();
+      });
+    }
+
+    /* =========================================================
+       EMPLEADOS — CRUD
+       Regla: un empleado con historial no se borra, se DESACTIVA.
+       Sus citas pasadas siguen mostrando quién atendió.
+       ========================================================= */
+    function renderEmployees() {
+      var wrap = document.getElementById("employees-list");
+      wrap.innerHTML = "";
+      if (!DB.employees.length) {
+        wrap.innerHTML = '<p class="dempty">No hay empleados todavía. Agrega el primero.</p>';
+        return;
+      }
+      DB.employees.forEach(function (emp) {
+        var off = emp.active === false;
+        var row = document.createElement("div");
+        row.className = "drow" + (off ? " is-off" : "");
+        row.innerHTML =
+          '<div><div class="name">' + escapeHtml(emp.name) + (off ? ' <span class="dtag off">Inactivo</span>' : '') + '</div><div class="meta">' + escapeHtml(emp.schedule || "") + '</div></div>' +
+          '<div class="drow-actions">' +
+            '<button class="icon-btn" data-edit="' + emp.id + '" title="Editar">✏️</button>' +
+            (off
+              ? '<button class="icon-btn" data-on="' + emp.id + '" title="Reactivar">↩️</button>'
+              : '<button class="icon-btn danger" data-off="' + emp.id + '" title="Desactivar (conserva el historial)">🗑️</button>') +
+          '</div>';
+        wrap.appendChild(row);
+      });
+      wrap.querySelectorAll("[data-edit]").forEach(function (b) {
+        b.addEventListener("click", function () { openEmployeeForm(b.dataset.edit); });
+      });
+      wrap.querySelectorAll("[data-off]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var emp = MMRules.empleadoPorId(DB, b.dataset.off);
+          if (!emp) return;
+          var pendientes = allAppointmentsFlat().filter(function (it) {
+            return it.appt.employeeId === emp.id && MMRules.esActiva(it.appt);
+          });
+          if (pendientes.length) {
+            alert(emp.name + " tiene " + pendientes.length + " cita(s) pendiente(s) o confirmada(s). Reasígnalas a otro peluquero o cancélalas antes de desactivarlo.");
+            return;
+          }
+          if (!confirm("El empleado ya no podrá recibir citas, pero su historial de atenciones se conserva. ¿Continuar?")) return;
+          emp.active = false;
+          saveDB(); renderEmployees(); renderInicio(); refreshApptSelectors();
+        });
+      });
+      wrap.querySelectorAll("[data-on]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var emp = MMRules.empleadoPorId(DB, b.dataset.on);
+          if (emp) emp.active = true;
+          saveDB(); renderEmployees(); renderInicio(); refreshApptSelectors();
+        });
+      });
+    }
+
+    document.getElementById("add-employee-btn").addEventListener("click", function () { openEmployeeForm(null); });
+
+    function openEmployeeForm(id) {
+      var emp = id ? DB.employees.find(function (e) { return e.id === id; }) : null;
+      var slot = document.getElementById("employee-form-slot");
+      slot.innerHTML =
+        '<form class="inline-form" id="employee-form">' +
+          '<div class="frow">' +
+            '<div><label>Nombre</label><input id="emp-name" required value="' + escapeHtml(emp ? emp.name : "") + '"></div>' +
+            '<div><label>Horario</label><input id="emp-schedule" placeholder="Lun–Sáb · 9:00–18:00" value="' + escapeHtml(emp ? emp.schedule : "") + '"></div>' +
+          '</div>' +
+          '<div class="factions">' +
+            '<button type="button" class="btn-sm cancel" id="emp-cancel">Cancelar</button>' +
+            '<button type="submit" class="btn-sm save">' + (emp ? "Guardar cambios" : "Agregar empleado") + '</button>' +
+          '</div>' +
+        '</form>';
+      document.getElementById("emp-cancel").addEventListener("click", function () { slot.innerHTML = ""; });
+      document.getElementById("employee-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var name = document.getElementById("emp-name").value.trim();
+        var schedule = document.getElementById("emp-schedule").value.trim();
+        if (!name) return;
+        if (emp) {
+          emp.name = name; emp.schedule = schedule;
+        } else {
+          DB.employees.push({ id: uid("e"), name: name, schedule: schedule, active: true });
+        }
+        saveDB(); slot.innerHTML = ""; renderEmployees(); renderInicio(); refreshApptSelectors();
+      });
+    }
+
+    /* =========================================================
+       RESERVAS (citas) — CRUD, incluye medicamentos por cita
+       ========================================================= */
+    var petFilterEl = document.getElementById("filter-pet");
+    petFilterEl.addEventListener("change", renderAppointments);
+
+    function refreshApptSelectors() {
+      petFilterEl.innerHTML = '<option value="">Todas las mascotas</option>' +
+        DB.pets.map(function (p) { return '<option value="' + p.id + '">' + p.avatar + " " + escapeHtml(p.name) + '</option>'; }).join("");
+    }
+
+    function apptKey(a) { return a.date + " " + (a.time || "00:00"); }
+
+    function allAppointmentsFlat() {
+      var list = [];
+      DB.pets.forEach(function (pet) {
+        pet.appointments.forEach(function (a) { list.push({ pet: pet, appt: a }); });
+      });
+      list.sort(function (x, y) { return apptKey(y.appt).localeCompare(apptKey(x.appt)); });
+      return list;
+    }
+
+    /* ---------- Punto 1: editar la fecha de la próxima cita por mascota ---------- */
+    function renderNextAppointments() {
+      var wrap = document.getElementById("next-appt-list");
+      wrap.innerHTML = "";
+      DB.pets.forEach(function (pet) {
+        var row = document.createElement("div");
+        row.className = "drow";
+        row.innerHTML =
+          '<div><div class="name">' + pet.avatar + " " + escapeHtml(pet.name) + '</div><div class="meta">' + escapeHtml(pet.owner) + '</div></div>' +
+          '<input type="date" value="' + (pet.nextAppointment || "") + '" data-next-for="' + pet.id + '" style="border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:.82rem;">' +
+          '<button class="icon-btn danger" data-clear-next="' + pet.id + '" title="Quitar próxima cita">✕</button>';
+        wrap.appendChild(row);
+      });
+      wrap.querySelectorAll("[data-next-for]").forEach(function (input) {
+        input.addEventListener("change", function () {
+          var pet = DB.pets.find(function (p) { return p.id === input.dataset.nextFor; });
+          if (!pet) return;
+          pet.nextAppointment = input.value || null;
+          saveDB();
+        });
+      });
+      wrap.querySelectorAll("[data-clear-next]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var pet = DB.pets.find(function (p) { return p.id === btn.dataset.clearNext; });
+          if (!pet) return;
+          pet.nextAppointment = null;
+          saveDB(); renderNextAppointments();
+        });
+      });
+    }
+
+    function estadoTagClass(estado) {
+      if (estado === "Cancelada") return "dtag cancel";
+      if (estado === "Pendiente") return "dtag warn";
+      if (estado === "Confirmada") return "dtag info";
+      return "dtag";
+    }
+
+    function renderAppointments() {
+      var wrap = document.getElementById("appts-list");
+      wrap.innerHTML = "";
+      var filterPet = petFilterEl.value;
+      var list = allAppointmentsFlat().filter(function (item) {
+        return !filterPet || item.pet.id === filterPet;
+      });
+
+      if (!list.length) {
+        wrap.innerHTML = '<p class="dempty">No hay reservas para mostrar.</p>';
+        return;
+      }
+
+      list.forEach(function (item) {
+        var pet = item.pet, appt = item.appt;
+        var card = document.createElement("div");
+        card.className = "appt-card";
+        var medsHtml = appt.meds.map(function (m, idx) {
+          return '<span class="med-chip">💊 ' + escapeHtml(m) + '<button data-rmmed="' + idx + '" title="Quitar">✕</button></span>';
+        }).join("");
+        var activa = MMRules.esActiva(appt);
+        var completada = appt.estado === "Completada";
+
+        card.innerHTML =
+          '<div class="appt-top">' +
+            '<div>' +
+              '<div class="appt-title">' + pet.avatar + " " + escapeHtml(pet.name) + " — " + escapeHtml(MMRules.nombreServicio(DB, appt)) + '</div>' +
+              '<div class="appt-sub">' + formatDate(appt.date) + " · " + escapeHtml(appt.time || "sin hora") + " · Atendido por " + escapeHtml(MMRules.nombreEmpleado(DB, appt)) + " · Dueño: " + escapeHtml(pet.owner) + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<span class="' + estadoTagClass(appt.estado) + '">' + escapeHtml(appt.estado || "Pendiente") + '</span>' +
+              '<div class="drow-actions">' +
+                (activa ? '<button class="icon-btn wsp" data-wsp title="Enviar confirmación por WhatsApp">📲</button>' : '') +
+                '<button class="icon-btn" data-edit-appt title="Editar cita">✏️</button>' +
+                (completada ? '' : '<button class="icon-btn danger" data-del-appt title="Eliminar cita">🗑️</button>') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<p style="font-size:.82rem;color:var(--ink-soft);margin:8px 0 4px;">' + escapeHtml(appt.notes || "Sin notas.") + '</p>' +
+          '<div><strong style="font-size:.75rem;color:var(--plum-dark);">Medicamentos recetados</strong>' +
+          '<div class="med-chip-row">' + (medsHtml || '<span style="font-size:.78rem;color:var(--ink-soft);">Ninguno</span>') + '</div>' +
+          '<div class="med-add-row"><input type="text" placeholder="Nuevo medicamento..." data-newmed>' +
+          '<button type="button" data-addmed>+ Agregar</button></div></div>';
+
+        // Quitar medicamento
+        card.querySelectorAll("[data-rmmed]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            appt.meds.splice(parseInt(btn.dataset.rmmed, 10), 1);
+            saveDB(); renderAppointments();
+          });
+        });
+        // Agregar medicamento
+        card.querySelector("[data-addmed]").addEventListener("click", function () {
+          var input = card.querySelector("[data-newmed]");
+          var val = input.value.trim();
+          if (!val) return;
+          appt.meds.push(val);
+          saveDB(); renderAppointments();
+        });
+        card.querySelector("[data-newmed]").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); card.querySelector("[data-addmed]").click(); }
+        });
+        // Confirmación por WhatsApp con la plantilla del negocio ({cliente}, {mascota}, {fecha}, {hora}, {empleado})
+        var wsp = card.querySelector("[data-wsp]");
+        if (wsp) {
+          wsp.addEventListener("click", function () {
+            if (!appt.time) { alert("Esta cita no tiene hora. Edítala y asígnale una hora antes de enviar la confirmación."); return; }
+            window.open(MMRules.enlaceWhatsApp(MMRules.mensajeConfirmacion(DB, pet, appt)), "_blank", "noopener");
+          });
+        }
+        // Editar cita
+        card.querySelector("[data-edit-appt]").addEventListener("click", function () {
+          openApptForm(pet.id, appt.id);
+        });
+        // Eliminar cita (las completadas son historial y no se eliminan)
+        var del = card.querySelector("[data-del-appt]");
+        if (del) {
+          del.addEventListener("click", function () {
+            if (!confirm("¿Eliminar esta reserva?")) return;
+            pet.appointments = pet.appointments.filter(function (a) { return a.id !== appt.id; });
+            saveDB(); renderAppointments(); renderInicio();
+          });
+        }
+
+        wrap.appendChild(card);
+      });
+    }
+
+    document.getElementById("add-appt-btn").addEventListener("click", function () { openApptForm(null, null); });
+
+    /* ---------- Formulario de cita con todas las reglas de negocio ----------
+       - Guarda fecha Y hora.
+       - Horario de atención (lun–sáb, 9:00–18:00), franjas de 30 min, 1 h de anticipación.
+       - Un peluquero no puede tener dos citas activas que se crucen (mismo u otro servicio).
+       - El servicio debe aplicar a la especie de la mascota.
+       - Solo transiciones de estado válidas; completada y cancelada son estados finales. */
+    function openApptForm(petId, apptId) {
+      var pet = petId ? DB.pets.find(function (p) { return p.id === petId; }) : null;
+      var appt = (pet && apptId) ? pet.appointments.find(function (a) { return a.id === apptId; }) : null;
+      var slot = document.getElementById("appt-form-slot");
+      var finalState = appt && MMRules.esFinal(appt);
+      var dis = finalState ? " disabled" : "";
+
+      var petOptions = DB.pets.map(function (p) {
+        return '<option value="' + p.id + '"' + (pet && pet.id === p.id ? " selected" : "") + '>' + p.avatar + " " + escapeHtml(p.name) + " (" + escapeHtml(p.owner) + ")</option>";
+      }).join("");
+
+      // Solo servicios reservables; si la cita ya tenía uno desactivado, se muestra para no perderlo.
+      var svcList = MMRules.serviciosReservables(DB).slice();
+      var currentSvc = appt && appt.serviceId ? MMRules.servicioPorId(DB, appt.serviceId) : null;
+      if (currentSvc && svcList.indexOf(currentSvc) === -1) svcList.push(currentSvc);
+      var svcOptions = svcList.map(function (s) {
+        return '<option value="' + s.id + '"' + (appt && appt.serviceId === s.id ? " selected" : "") + '>' +
+          escapeHtml(s.name) + " (" + s.duration + " min)" + (s.active === false ? " — inactivo" : "") + '</option>';
+      }).join("");
+
+      var empList = MMRules.empleadosActivos(DB).slice();
+      var currentEmp = appt && appt.employeeId ? MMRules.empleadoPorId(DB, appt.employeeId) : null;
+      if (currentEmp && empList.indexOf(currentEmp) === -1) empList.push(currentEmp);
+      var empOptions = empList.map(function (e) {
+        return '<option value="' + e.id + '"' + (appt && appt.employeeId === e.id ? " selected" : "") + '>' + escapeHtml(e.name) + (e.active === false ? " — inactivo" : "") + '</option>';
+      }).join("");
+
+      var estados = appt ? MMRules.estadosPermitidos(appt.estado) : ["Pendiente", "Confirmada"];
+
+      slot.innerHTML =
+        '<form class="inline-form" id="appt-form">' +
+          (finalState ? '<p class="form-note">Esta cita está <strong>' + escapeHtml(appt.estado) + '</strong>: es un estado final, así que solo puedes editar las notas.</p>' : '') +
+          '<div class="frow">' +
+            '<div><label>🐾 Mascota</label><select id="appt-pet" class="pet-select" required' + dis + '>' + petOptions + '</select></div>' +
+            '<div><label>Servicio</label><select id="appt-service" required' + dis + '>' + svcOptions + '</select></div>' +
+          '</div>' +
+          '<div class="frow">' +
+            '<div><label>Fecha</label><input id="appt-date" type="date" required' + dis + ' value="' + (appt ? appt.date : "") + '"></div>' +
+            '<div><label>Hora (franjas de 30 min, 9:00–18:00)</label><input id="appt-time" type="time" required step="1800" min="09:00" max="17:30"' + dis + ' value="' + (appt && appt.time ? appt.time : "") + '"></div>' +
+          '</div>' +
+          '<div class="frow">' +
+            '<div><label>Profesional</label><select id="appt-prof" required' + dis + '>' + empOptions + '</select></div>' +
+            '<div><label>Estado</label><select id="appt-estado"' + dis + '>' +
+              estados.map(function (s) {
+                return '<option value="' + s + '"' + ((appt ? appt.estado === s : s === "Pendiente") ? " selected" : "") + '>' + s + '</option>';
+              }).join("") +
+            '</select></div>' +
+          '</div>' +
+          '<div><label>Notas</label><textarea id="appt-notes">' + escapeHtml(appt ? appt.notes : "") + '</textarea></div>' +
+          '<p class="form-error" id="appt-error"></p>' +
+          '<div class="factions">' +
+            '<button type="button" class="btn-sm cancel" id="appt-cancel">Cancelar</button>' +
+            '<button type="submit" class="btn-sm save">' + (appt ? "Guardar cambios" : "Crear reserva") + '</button>' +
+          '</div>' +
+        '</form>';
+
+      var errEl = document.getElementById("appt-error");
+      function fail(msg) { errEl.textContent = msg; return false; }
+
+      document.getElementById("appt-cancel").addEventListener("click", function () { slot.innerHTML = ""; });
+      document.getElementById("appt-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        errEl.textContent = "";
+        var notes = document.getElementById("appt-notes").value.trim();
+
+        // Cita en estado final: solo se actualizan las notas.
+        if (finalState) {
+          appt.notes = notes;
+          saveDB(); slot.innerHTML = ""; renderAppointments();
+          return;
+        }
+
+        var newPet = DB.pets.find(function (p) { return p.id === document.getElementById("appt-pet").value; });
+        var date = document.getElementById("appt-date").value;
+        var time = document.getElementById("appt-time").value;
+        var svc = MMRules.servicioPorId(DB, document.getElementById("appt-service").value);
+        var emp = MMRules.empleadoPorId(DB, document.getElementById("appt-prof").value);
+        var estado = document.getElementById("appt-estado").value;
+        if (!newPet || !svc || !emp) return fail("Completa mascota, servicio y profesional.");
+
+        if (appt && !MMRules.puedeCambiar(appt.estado, estado)) {
+          return fail("No se puede pasar de " + appt.estado + " a " + estado + ".");
+        }
+        if (estado === "Completada" && (!appt || appt.estado !== "Confirmada")) {
+          return fail("Solo se puede completar una cita que ya estaba confirmada.");
+        }
+        var errEspecie = MMRules.validarEspecie(svc, newPet);
+        if (errEspecie) return fail(errEspecie);
+
+        var cambiaHorario = !appt || appt.date !== date || appt.time !== time || appt.employeeId !== emp.id || appt.serviceId !== svc.id;
+        if (cambiaHorario && estado !== "Cancelada") {
+          var errFranja = MMRules.validarFranja(date, time, svc.duration, { nueva: true });
+          if (errFranja) return fail(errFranja);
+          var choque = MMRules.buscarChoque(DB, { employeeId: emp.id, date: date, time: time, duration: svc.duration, excludeId: appt ? appt.id : null });
+          if (choque) {
+            return fail(emp.name + " ya tiene una cita a esa hora: " + choque.pet.name + " — " + MMRules.nombreServicio(DB, choque.appt) +
+              " a las " + choque.appt.time + ". Elige otra hora u otro profesional.");
+          }
+        }
+
+        var datos = { date: date, time: time, serviceId: svc.id, service: svc.name, employeeId: emp.id, professional: emp.name, estado: estado, notes: notes };
+        if (appt && pet) {
+          Object.keys(datos).forEach(function (k) { appt[k] = datos[k]; });
+          if (pet.id !== newPet.id) {
+            pet.appointments = pet.appointments.filter(function (a) { return a.id !== appt.id; });
+            newPet.appointments.push(appt);
+          }
+        } else {
+          datos.id = uid("a"); datos.meds = [];
+          newPet.appointments.push(datos);
+        }
+        saveDB(); slot.innerHTML = ""; renderAppointments(); renderInicio();
+      });
+    }
+
+    /* =========================================================
+       PERFIL DEL NEGOCIO — Update
+       ========================================================= */
+    function renderProfile() {
+      document.getElementById("p-name").value = DB.meta.businessName || "";
+      document.getElementById("p-phone").value = DB.meta.phone || "";
+      document.getElementById("p-address").value = DB.meta.address || "";
+      document.getElementById("p-hours").value = DB.meta.hours || "";
+      document.getElementById("p-template").value = DB.meta.confirmationTemplate || "";
+    }
+    document.getElementById("profile-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      DB.meta.businessName = document.getElementById("p-name").value.trim();
+      DB.meta.phone = document.getElementById("p-phone").value.trim();
+      DB.meta.address = document.getElementById("p-address").value.trim();
+      DB.meta.hours = document.getElementById("p-hours").value.trim();
+      DB.meta.confirmationTemplate = document.getElementById("p-template").value.trim();
+      saveDB();
+      renderInicio();
+    });
+
+    /* =========================================================
+       USUARIOS — CRUD (solo desarrollador)
+       ========================================================= */
+    var ROLE_LABELS = { client: "Cliente", empleado: "Peluquero", dueno: "Dueño", desarrollador: "Desarrollador" };
+
+    function linkedName(u) {
+      if (u.role === "client" && u.petId) {
+        var pet = DB.pets.find(function (p) { return p.id === u.petId; });
+        return pet ? "Mascota: " + pet.avatar + " " + pet.name : "Sin mascota vinculada";
+      }
+      if (u.role === "empleado" && u.employeeId) {
+        var emp = DB.employees.find(function (e) { return e.id === u.employeeId; });
+        return emp ? "Empleado: " + emp.name : "Sin empleado vinculado";
+      }
+      return "—";
+    }
+
+    function renderUsers() {
+      var wrap = document.getElementById("users-list");
+      wrap.innerHTML = "";
+      DB.users.forEach(function (u) {
+        var row = document.createElement("div");
+        row.className = "drow";
+        row.innerHTML =
+          '<div><div class="name">' + escapeHtml(u.username) + ' <span class="dtag">' + (ROLE_LABELS[u.role] || u.role) + '</span></div>' +
+          '<div class="meta">' + escapeHtml(u.name || "") + " · " + escapeHtml(linkedName(u)) + '</div></div>' +
+          '<div class="drow-actions">' +
+            '<button class="icon-btn" data-edit-user="' + u.username + '" title="Editar">✏️</button>' +
+            '<button class="icon-btn danger" data-del-user="' + u.username + '" title="Eliminar">🗑️</button>' +
+          '</div>';
+        wrap.appendChild(row);
+      });
+      wrap.querySelectorAll("[data-edit-user]").forEach(function (b) {
+        b.addEventListener("click", function () { openUserForm(b.dataset.editUser); });
+      });
+      wrap.querySelectorAll("[data-del-user]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          if (b.dataset.delUser === session.username) { alert("No puedes eliminar tu propia cuenta activa."); return; }
+          if (!confirm("¿Eliminar este usuario?")) return;
+          DB.users = DB.users.filter(function (u) { return u.username !== b.dataset.delUser; });
+          saveDB(); renderUsers();
+        });
+      });
+    }
+
+    document.getElementById("add-user-btn").addEventListener("click", function () { openUserForm(null); });
+
+    function openUserForm(username) {
+      var u = username ? DB.users.find(function (x) { return x.username === username; }) : null;
+      var slot = document.getElementById("user-form-slot");
+
+      var roleOptions = Object.keys(ROLE_LABELS).map(function (r) {
+        return '<option value="' + r + '"' + (u && u.role === r ? " selected" : "") + '>' + ROLE_LABELS[r] + '</option>';
+      }).join("");
+      var petOptions = '<option value="">(ninguna)</option>' + DB.pets.map(function (p) {
+        return '<option value="' + p.id + '"' + (u && u.petId === p.id ? " selected" : "") + '>' + p.avatar + " " + escapeHtml(p.name) + '</option>';
+      }).join("");
+      var empOptions = '<option value="">(ninguno)</option>' + DB.employees.map(function (e) {
+        return '<option value="' + e.id + '"' + (u && u.employeeId === e.id ? " selected" : "") + '>' + escapeHtml(e.name) + '</option>';
+      }).join("");
+
+      slot.innerHTML =
+        '<form class="inline-form" id="user-form">' +
+          '<div class="frow">' +
+            '<div><label>Usuario (login)</label><input id="usr-username" required' + (u ? ' readonly style="opacity:.6;"' : '') + ' value="' + escapeHtml(u ? u.username : "") + '"></div>' +
+            '<div><label>Contraseña</label><input id="usr-password" required value="' + escapeHtml(u ? u.password : "") + '"></div>' +
+          '</div>' +
+          '<div class="frow">' +
+            '<div><label>Nombre para mostrar</label><input id="usr-name" required value="' + escapeHtml(u ? u.name : "") + '"></div>' +
+            '<div><label>Rol</label><select id="usr-role">' + roleOptions + '</select></div>' +
+          '</div>' +
+          '<div class="frow">' +
+            '<div><label>Vincular a mascota (si es cliente)</label><select id="usr-pet">' + petOptions + '</select></div>' +
+            '<div><label>Vincular a empleado (si es peluquero)</label><select id="usr-emp">' + empOptions + '</select></div>' +
+          '</div>' +
+          '<div class="factions">' +
+            '<button type="button" class="btn-sm cancel" id="usr-cancel">Cancelar</button>' +
+            '<button type="submit" class="btn-sm save">' + (u ? "Guardar cambios" : "Crear usuario") + '</button>' +
+          '</div>' +
+        '</form>';
+
+      document.getElementById("usr-cancel").addEventListener("click", function () { slot.innerHTML = ""; });
+      document.getElementById("user-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var username = document.getElementById("usr-username").value.trim();
+        var password = document.getElementById("usr-password").value.trim();
+        var name = document.getElementById("usr-name").value.trim();
+        var role = document.getElementById("usr-role").value;
+        var petId = document.getElementById("usr-pet").value || undefined;
+        var employeeId = document.getElementById("usr-emp").value || undefined;
+        if (!username || !password || !name) return;
+        if (!u && DB.users.some(function (x) { return x.username === username; })) {
+          alert("Ese usuario ya existe.");
+          return;
+        }
+        if (u) {
+          u.password = password; u.name = name; u.role = role; u.petId = petId; u.employeeId = employeeId;
+        } else {
+          DB.users.push({ username: username, password: password, name: name, role: role, petId: petId, employeeId: employeeId });
+        }
+        saveDB(); slot.innerHTML = ""; renderUsers();
+      });
+    }
+
+    /* =========================================================
+       BASE DE DATOS — vista técnica (solo desarrollador)
+       ========================================================= */
+    function renderDatabase() {
+      var json = JSON.stringify(DB, null, 2);
+      document.getElementById("db-json-view").textContent = json;
+      document.getElementById("db-stat-size").textContent = (new Blob([json]).size / 1024).toFixed(1);
+      document.getElementById("db-stat-users").textContent = DB.users.length;
+      document.getElementById("db-stat-pets").textContent = DB.pets.length;
+      var totalAppts = DB.pets.reduce(function (sum, p) { return sum + p.appointments.length; }, 0);
+      document.getElementById("db-stat-appts").textContent = totalAppts;
+    }
+    document.getElementById("copy-db-btn").addEventListener("click", function () {
+      var json = document.getElementById("db-json-view").textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(json).then(toast).catch(function () { alert("No se pudo copiar automáticamente. Selecciona el texto manualmente."); });
+      } else {
+        alert("Tu navegador no soporta copiar automáticamente. Selecciona el texto manualmente.");
+      }
+    });
+
+    /* ---------- Restablecer datos de ejemplo ---------- */
+    document.getElementById("reset-db-btn").addEventListener("click", function () {
+      if (!confirm("Esto borra todos los cambios guardados en este navegador. ¿Continuar?")) return;
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      fetch("data.json").then(function (r) { return r.json(); }).then(function (json) {
+        DB = json;
+        MMRules.migrar(DB);
+        saveDB();
+        renderAll();
+      });
+    });
+
+    /* ---------- Render inicial ---------- */
+    function renderAll() {
+      refreshApptSelectors();
+      renderInicio();
+      renderServices();
+      renderEmployees();
+      renderNextAppointments();
+      renderAppointments();
+      renderProfile();
+      renderUsers();
+      renderDatabase();
+    }
+
+    loadDB().then(function (json) {
+      DB = json;
+      if (MMRules.migrar(DB)) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); } catch (e) {} }
+      renderAll();
+    });
+
+  })();
+  </script>
+</body>
+</html>

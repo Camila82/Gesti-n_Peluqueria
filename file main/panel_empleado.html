@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Panel del peluquero de M&M Petshop.">
+  <meta name="robots" content="noindex">
+  <title>Mi panel | M&M Petshop</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- =========================================================
+       Todo lo del panel de peluquero (estilos, marcado y lógica)
+       vive únicamente en este archivo.
+       ========================================================= -->
+  <style>
+    :root{
+      --app-teal: #35A79A;
+      --app-plum: #6653A0;
+      --app-coral: #E37A5E;
+      --app-mint: #D7F0E6;
+      --app-lav: #E7E0F4;
+      --app-peach: #FBE3CE;
+      --app-pink: #FBDCE6;
+    }
+    body{ background:var(--cream); }
+
+    .dash{ display:flex; min-height:100vh; }
+    .dash-side{
+      width:210px; flex-shrink:0;
+      background:linear-gradient(180deg, var(--app-teal), var(--teal-dark));
+      color:#fff; padding:24px 16px; display:flex; flex-direction:column;
+      position:sticky; top:0; height:100vh; overflow-y:auto;
+    }
+    .dash-brand{ display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-weight:700; font-size:1.05rem; margin-bottom:26px; }
+    .dash-nav{ display:flex; flex-direction:column; gap:4px; flex:1; }
+    .dash-link{
+      display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:14px;
+      font-weight:700; font-size:.88rem; color:rgba(255,255,255,.85); cursor:pointer;
+      border:none; background:transparent; text-align:left; width:100%; font-family:var(--font-body);
+    }
+    .dash-link.active{ background:rgba(255,255,255,.18); color:#fff; }
+    .dash-link:hover{ background:rgba(255,255,255,.12); color:#fff; }
+    .dash-user{ margin:16px 0 10px; background:rgba(255,255,255,.1); border-radius:12px; padding:12px; font-size:.78rem; line-height:1.5; }
+    .dash-user b{ display:block; font-family:var(--font-display); font-size:.9rem; }
+    .dash-logout{
+      background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
+      color:#fff; border-radius:12px; padding:11px; font-family:var(--font-display); font-weight:600;
+      font-size:.85rem; cursor:pointer;
+    }
+
+    .dash-main{ flex:1; padding:30px 34px; min-width:0; }
+    .dash-head{ margin-bottom:22px; }
+    .dash-head p{ margin:4px 0 0; }
+
+    .dash-tab{ display:none; }
+    .dash-tab.active{ display:block; }
+
+    .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+    .toolbar select{ border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:.82rem; background:var(--white); }
+
+    .dpanel{ background:var(--white); border:1px solid var(--line); border-radius:16px; margin-bottom:20px; overflow:hidden; }
+    .dpanel-head{ display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); gap:10px; flex-wrap:wrap; }
+    .dpanel-head h3{ font-size:.98rem; margin:0; font-family:var(--font-display); font-weight:600; color:var(--plum-dark); }
+    .dempty{ padding:18px; font-size:.85rem; color:var(--ink-soft); }
+
+    .drow{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); font-size:.85rem; }
+    .drow:last-child{ border-bottom:none; }
+    .drow > div:first-child{ flex:1 1 auto; min-width:0; }
+    .drow .name{ font-weight:700; }
+    .drow .meta{ font-size:.75rem; color:var(--ink-soft); }
+    .dtag{ font-size:.7rem; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--app-mint); color:var(--teal-dark); white-space:nowrap; flex-shrink:0; }
+    .dtag.warn{ background:var(--app-peach); color:#8A4A24; }
+    .dtag.cancel{ background:var(--app-pink); color:#9A3B54; }
+    .dtag.info{ background:#E3ECFA; color:#2C4C80; }
+    .form-error{ color:#9A3B54; font-size:.8rem; font-weight:700; margin:6px 0 0; min-height:1em; }
+    .form-note{ color:var(--ink-soft); font-size:.78rem; margin:6px 0 0; }
+
+    .icon-btn{
+      border:1px solid var(--line); background:var(--white); border-radius:9px; width:30px; height:30px;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.85rem;
+    }
+    .icon-btn:hover{ border-color:var(--teal); }
+
+    .appt-card{ border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin:0 18px 14px; }
+    .appt-card:last-child{ margin-bottom:18px; }
+    .appt-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+    .appt-title{ font-family:var(--font-display); font-weight:600; font-size:.95rem; }
+    .appt-sub{ font-size:.75rem; color:var(--ink-soft); }
+
+    .inline-form{ padding:14px 18px; background:var(--cream-soft); border-bottom:1px solid var(--line); display:grid; gap:10px; }
+    .inline-form .frow{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .inline-form label{ font-size:.72rem; font-weight:700; color:var(--plum-dark); display:block; margin-bottom:4px; }
+    .inline-form input, .inline-form select, .inline-form textarea{
+      width:100%; border:1px solid var(--line); border-radius:10px; padding:9px 11px;
+      font-family:var(--font-body); font-size:.85rem; background:var(--white);
+    }
+    .inline-form select:focus, .inline-form input:focus, .inline-form textarea:focus{
+      outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(63,140,137,.16);
+    }
+    .inline-form textarea{ resize:vertical; min-height:64px; }
+    .inline-form .factions{ display:flex; gap:8px; justify-content:flex-end; }
+    .btn-sm{ border-radius:999px; padding:8px 16px; font-family:var(--font-display); font-weight:600; font-size:.78rem; cursor:pointer; border:1px solid transparent; }
+    .btn-sm.save{ background:var(--coral); color:#fff; }
+    .btn-sm.save:hover{ background:var(--coral-dark); }
+    .btn-sm.cancel{ background:var(--white); border-color:var(--line); color:var(--ink-soft); }
+
+    .med-chip-row{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+    .med-chip{ display:inline-flex; align-items:center; gap:6px; background:var(--app-peach); color:#8A4A24; font-size:.72rem; font-weight:700; padding:4px 6px 4px 10px; border-radius:999px; }
+    .med-chip button{ border:none; background:rgba(0,0,0,.08); color:inherit; width:16px; height:16px; border-radius:50%; cursor:pointer; font-size:.65rem; line-height:1; display:flex; align-items:center; justify-content:center; }
+    .med-add-row{ display:flex; gap:6px; margin-top:6px; }
+    .med-add-row input{ flex:1; border:1px solid var(--line); border-radius:8px; padding:6px 9px; font-size:.78rem; }
+    .med-add-row button{ border:none; background:var(--teal); color:#fff; border-radius:8px; padding:6px 10px; font-size:.78rem; cursor:pointer; }
+
+    .pet-card{ background:var(--white); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:16px; }
+    .pet-card-head{ display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+    .pet-card-avatar{ width:48px; height:48px; border-radius:50%; background:var(--app-lav); display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0; }
+
+    .save-toast{
+      position:fixed; bottom:20px; right:20px; background:var(--plum-dark); color:#fff;
+      padding:12px 18px; border-radius:12px; font-size:.85rem; font-weight:600;
+      box-shadow:var(--shadow-soft); opacity:0; transform:translateY(10px); transition:opacity .2s, transform .2s;
+      pointer-events:none; z-index:200;
+    }
+    .save-toast.show{ opacity:1; transform:translateY(0); }
+
+    @media (max-width:900px){
+      .dash{ flex-direction:column; }
+      .dash-side{ width:100%; flex-direction:row; align-items:center; gap:10px; overflow-x:auto; position:relative; height:auto; }
+      .dash-brand{ margin-bottom:0; }
+      .dash-nav{ flex-direction:row; }
+      .dash-user{ display:none; }
+      .dash-main{ padding:22px 18px; }
+      .inline-form .frow{ grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dash">
+    <aside class="dash-side">
+      <div class="dash-brand">🐾 M&amp;M Petshop</div>
+      <nav class="dash-nav">
+        <button class="dash-link active" data-tab="agenda" type="button">📅 Mi agenda</button>
+        <button class="dash-link" data-tab="mascotas" type="button">🐾 Mascotas</button>
+      </nav>
+      <div class="dash-user"><b id="side-emp-name">Peluquero</b>Sesión de peluquero</div>
+      <button id="emp-logout" class="dash-logout" type="button">↩ Cerrar sesión</button>
+    </aside>
+
+    <main class="dash-main">
+
+      <!-- ============ TAB: MI AGENDA ============ -->
+      <section class="dash-tab active" id="tab-agenda">
+        <div class="dash-head">
+          <h2>Hola, <span id="emp-name">Peluquero</span> 👋</h2>
+          <p>Tus citas asignadas: cambia el estado y deja el servicio realizado con tus observaciones.</p>
+        </div>
+
+        <div class="toolbar">
+          <select id="filter-estado">
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Confirmada">Confirmada</option>
+            <option value="Completada">Completada</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </div>
+
+        <div class="dpanel">
+          <div class="dpanel-head"><h3>Citas asignadas a mí</h3></div>
+          <div id="agenda-list"></div>
+        </div>
+      </section>
+
+      <!-- ============ TAB: MASCOTAS ============ -->
+      <section class="dash-tab" id="tab-mascotas">
+        <div class="dash-head">
+          <h2>Mascotas que has atendido</h2>
+          <p>Información de referencia para tu próxima cita con cada una.</p>
+        </div>
+        <div id="pets-list"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="save-toast" id="save-toast">Guardado ✓</div>
+
+  <script src="reglas.js"></script>
+  <script>
+  (function () {
+
+    var STORAGE_KEY = "mm_petshop_db";
+    var SESSION_KEY = "mm_session";
+    var DB = null;
+
+    /* ---------- Guarda de sesión: solo el rol "empleado" puede ver este archivo ---------- */
+    var session = null;
+    try { session = JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch (e) { session = null; }
+    if (!session || session.role !== "empleado") {
+      window.location.href = "index.html";
+      return;
+    }
+    document.getElementById("emp-name").textContent = session.name || "Peluquero";
+    document.getElementById("side-emp-name").textContent = session.name || "Peluquero";
+
+    document.getElementById("emp-logout").addEventListener("click", function () {
+      try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+      window.location.href = "index.html";
+    });
+
+    /* ---------- Carga del almacén compartido ---------- */
+    function loadDB() {
+      var cached = null;
+      try { cached = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+      if (cached) {
+        try { return Promise.resolve(JSON.parse(cached)); } catch (e) {}
+      }
+      return fetch("data.json").then(function (res) { return res.json(); });
+    }
+    function saveDB() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); } catch (e) {}
+      toast();
+    }
+    function toast() {
+      var el = document.getElementById("save-toast");
+      el.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(function () { el.classList.remove("show"); }, 1400);
+    }
+    function formatDate(isoDate) {
+      if (!isoDate) return "—";
+      var d = new Date(isoDate + "T00:00:00");
+      return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+    }
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    /* ---------- Navegación entre pestañas ---------- */
+    document.querySelectorAll(".dash-link[data-tab]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll(".dash-link[data-tab]").forEach(function (b) { b.classList.toggle("active", b === btn); });
+        document.querySelectorAll(".dash-tab").forEach(function (s) { s.classList.toggle("active", s.id === "tab-" + btn.dataset.tab); });
+      });
+    });
+
+    /* ---------- Solo las citas asignadas a este empleado ---------- */
+    function myAppointments() {
+      var list = [];
+      DB.pets.forEach(function (pet) {
+        pet.appointments.forEach(function (a) {
+          if (a.employeeId === session.employeeId || a.professional === session.name) {
+            list.push({ pet: pet, appt: a });
+          }
+        });
+      });
+      list.sort(function (x, y) { return (x.appt.date + (x.appt.time || "")).localeCompare(y.appt.date + (y.appt.time || "")); }); // más próximas primero
+      return list;
+    }
+
+    var estadoFilter = document.getElementById("filter-estado");
+    estadoFilter.addEventListener("change", renderAgenda);
+
+    function estadoTagClass(estado) {
+      if (estado === "Cancelada") return "dtag cancel";
+      if (estado === "Pendiente") return "dtag warn";
+      if (estado === "Confirmada") return "dtag info";
+      return "dtag";
+    }
+
+    function renderAgenda() {
+      var wrap = document.getElementById("agenda-list");
+      wrap.innerHTML = "";
+      var mine = myAppointments().filter(function (item) {
+        return !estadoFilter.value || item.appt.estado === estadoFilter.value;
+      });
+
+      if (!mine.length) {
+        wrap.innerHTML = '<p class="dempty">No tienes citas asignadas con ese filtro.</p>';
+        return;
+      }
+
+      mine.forEach(function (item) {
+        var pet = item.pet, appt = item.appt;
+        var card = document.createElement("div");
+        card.className = "appt-card";
+        var medsHtml = appt.meds.map(function (m, idx) {
+          return '<span class="med-chip">💊 ' + escapeHtml(m) + '<button data-rmmed="' + idx + '" title="Quitar">✕</button></span>';
+        }).join("");
+
+        card.innerHTML =
+          '<div class="appt-top">' +
+            '<div>' +
+              '<div class="appt-title">' + pet.avatar + " " + escapeHtml(pet.name) + " — " + escapeHtml(MMRules.nombreServicio(DB, appt)) + '</div>' +
+              '<div class="appt-sub">' + formatDate(appt.date) + " · " + escapeHtml(appt.time || "sin hora") + " · " + escapeHtml(pet.breed) + " · Dueño: " + escapeHtml(pet.owner) + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<span class="' + estadoTagClass(appt.estado) + '">' + escapeHtml(appt.estado || "Pendiente") + '</span>' +
+              '<button class="icon-btn" data-edit-appt title="Registrar servicio / cambiar estado">✏️</button>' +
+            '</div>' +
+          '</div>' +
+          '<div id="edit-slot-' + appt.id + '"></div>' +
+          '<p style="font-size:.82rem;color:var(--ink-soft);margin:8px 0 4px;">' + escapeHtml(appt.notes || "Sin observaciones todavía.") + '</p>' +
+          '<div><strong style="font-size:.75rem;color:var(--plum-dark);">Medicamentos recetados</strong>' +
+          '<div class="med-chip-row">' + (medsHtml || '<span style="font-size:.78rem;color:var(--ink-soft);">Ninguno</span>') + '</div>' +
+          '<div class="med-add-row"><input type="text" placeholder="Nuevo medicamento..." data-newmed>' +
+          '<button type="button" data-addmed>+ Agregar</button></div></div>';
+
+        card.querySelectorAll("[data-rmmed]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            appt.meds.splice(parseInt(btn.dataset.rmmed, 10), 1);
+            saveDB(); renderAgenda();
+          });
+        });
+        card.querySelector("[data-addmed]").addEventListener("click", function () {
+          var input = card.querySelector("[data-newmed]");
+          var val = input.value.trim();
+          if (!val) return;
+          appt.meds.push(val);
+          saveDB(); renderAgenda();
+        });
+        card.querySelector("[data-newmed]").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); card.querySelector("[data-addmed]").click(); }
+        });
+        card.querySelector("[data-edit-appt]").addEventListener("click", function () {
+          openEditForm(pet, appt);
+        });
+
+        wrap.appendChild(card);
+      });
+    }
+
+    /* ---------- Registrar servicio / cambiar estado ----------
+       Reglas: solo transiciones válidas (Pendiente → Confirmada/Cancelada,
+       Confirmada → Completada/Cancelada). Completada y Cancelada son finales:
+       una cita cancelada no se completa y una completada no se cancela. */
+    function openEditForm(pet, appt) {
+      var slot = document.getElementById("edit-slot-" + appt.id);
+      if (slot.innerHTML) { slot.innerHTML = ""; return; } // toggle: si ya está abierto, lo cierra
+
+      var finalState = MMRules.esFinal(appt);
+      var dis = finalState ? " disabled" : "";
+      var svcList = MMRules.serviciosReservables(DB).slice();
+      var current = appt.serviceId ? MMRules.servicioPorId(DB, appt.serviceId) : null;
+      if (current && svcList.indexOf(current) === -1) svcList.push(current);
+      var svcOptions = svcList.map(function (s) {
+        return '<option value="' + s.id + '"' + (appt.serviceId === s.id ? " selected" : "") + '>' + escapeHtml(s.name) + '</option>';
+      }).join("");
+
+      slot.innerHTML =
+        '<form class="inline-form" style="margin-top:10px;border-radius:12px;">' +
+          (finalState ? '<p class="form-note">Esta cita está <strong>' + escapeHtml(appt.estado) + '</strong> y ya no cambia de estado. Puedes completar las observaciones.</p>' : '') +
+          '<div class="frow">' +
+            '<div><label>Servicio realizado</label><select id="edit-service-' + appt.id + '"' + dis + '>' + svcOptions + '</select></div>' +
+            '<div><label>Estado de la cita</label><select id="edit-estado-' + appt.id + '"' + dis + '>' +
+              MMRules.estadosPermitidos(appt.estado).map(function (s) {
+                return '<option value="' + s + '"' + (appt.estado === s ? " selected" : "") + '>' + s + '</option>';
+              }).join("") +
+            '</select></div>' +
+          '</div>' +
+          '<div><label>Observaciones</label><textarea id="edit-notes-' + appt.id + '">' + escapeHtml(appt.notes) + '</textarea></div>' +
+          '<p class="form-error" data-error></p>' +
+          '<div class="factions">' +
+            '<button type="button" class="btn-sm cancel" data-cancel-edit>Cancelar</button>' +
+            '<button type="submit" class="btn-sm save">Guardar</button>' +
+          '</div>' +
+        '</form>';
+
+      var errEl = slot.querySelector("[data-error]");
+      slot.querySelector("[data-cancel-edit]").addEventListener("click", function () { slot.innerHTML = ""; });
+      slot.querySelector("form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        errEl.textContent = "";
+        var notes = document.getElementById("edit-notes-" + appt.id).value.trim();
+        if (finalState) {
+          appt.notes = notes;
+          saveDB(); renderAgenda();
+          return;
+        }
+        var estado = document.getElementById("edit-estado-" + appt.id).value;
+        var svc = MMRules.servicioPorId(DB, document.getElementById("edit-service-" + appt.id).value);
+        if (!MMRules.puedeCambiar(appt.estado, estado)) {
+          errEl.textContent = "No se puede pasar de " + appt.estado + " a " + estado + ".";
+          return;
+        }
+        if (svc && svc.id !== appt.serviceId) {
+          var errEspecie = MMRules.validarEspecie(svc, pet);
+          if (errEspecie) { errEl.textContent = errEspecie; return; }
+          if (estado !== "Cancelada") {
+            var choque = MMRules.buscarChoque(DB, { employeeId: appt.employeeId, date: appt.date, time: appt.time, duration: svc.duration, excludeId: appt.id });
+            if (choque) {
+              errEl.textContent = "Con ese servicio la cita se cruzaría con " + choque.pet.name + " a las " + choque.appt.time + ".";
+              return;
+            }
+          }
+          appt.serviceId = svc.id;
+          appt.service = svc.name;
+        }
+        appt.estado = estado;
+        appt.notes = notes;
+        saveDB(); renderAgenda();
+      });
+    }
+
+    /* ---------- Mascotas que ha atendido este empleado ---------- */
+    function renderPets() {
+      var wrap = document.getElementById("pets-list");
+      wrap.innerHTML = "";
+      var mine = myAppointments();
+      var seen = {};
+      var pets = [];
+      mine.forEach(function (item) {
+        if (!seen[item.pet.id]) { seen[item.pet.id] = true; pets.push(item.pet); }
+      });
+
+      if (!pets.length) {
+        wrap.innerHTML = '<p class="dempty">Todavía no tienes mascotas asignadas.</p>';
+        return;
+      }
+
+      pets.forEach(function (pet) {
+        var visitCount = pet.appointments.filter(function (a) {
+          return a.employeeId === session.employeeId || a.professional === session.name;
+        }).length;
+        var card = document.createElement("div");
+        card.className = "pet-card";
+        card.innerHTML =
+          '<div class="pet-card-head">' +
+            '<div class="pet-card-avatar">' + pet.avatar + '</div>' +
+            '<div><div class="name" style="font-family:var(--font-display);font-weight:600;">' + escapeHtml(pet.name) + '</div>' +
+            '<div class="meta">' + escapeHtml(pet.breed) + " · " + escapeHtml(pet.age) + " · Dueño: " + escapeHtml(pet.owner) + '</div></div>' +
+          '</div>' +
+          '<p style="font-size:.82rem;color:var(--ink-soft);margin:0;">La has atendido ' + visitCount + (visitCount === 1 ? " vez." : " veces.") + '</p>';
+        wrap.appendChild(card);
+      });
+    }
+
+    /* ---------- Render inicial ---------- */
+    loadDB().then(function (json) {
+      DB = json;
+      if (MMRules.migrar(DB)) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); } catch (e) {} }
+      renderAgenda();
+      renderPets();
+    });
+
+  })();
+  </script>
+</body>
+</html>
